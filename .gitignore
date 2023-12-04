@@ -1,0 +1,8 @@
+.env
+.mp3
+
+/buffer
+__pycache__/
+
+bugs.txt
+discordPermisions.txt

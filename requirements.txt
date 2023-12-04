@@ -1,0 +1,10 @@
+discord.py[voice]
+python-dotenv
+
+urllib3
+
+yt-dlp
+
+google-api-python-client
+google-auth-oauthlib 
+google-auth-httplib2
