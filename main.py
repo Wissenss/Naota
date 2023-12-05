@@ -9,12 +9,13 @@ from musicPlayer import MusicPlayer
 
 load_dotenv(override=True)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+COMMAND_PREFIX = os.getenv("COMMAND_PREFIX")
 
 intents =  discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
 guild_storage = {}
 
@@ -28,4 +29,4 @@ async def ping(ctx):
 
 bot.add_command(ping)
 
-bot.run(BOT_TOKEN)
+bot.run(DISCORD_TOKEN)

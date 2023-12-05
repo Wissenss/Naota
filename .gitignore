@@ -1,8 +1,10 @@
+__pycache__/
+
 .env
 .mp3
 
 /buffer
-__pycache__/
+/release
 
 bugs.txt
 discordPermisions.txt
