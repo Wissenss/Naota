@@ -74,7 +74,7 @@ def get_videos_urls_from_url(url):
 
   return videos_urls
 
-def get_video_info_from_id(video_id):
+def get_video_snippet_from_id(video_id):
   request = youtube.videos().list(part="id,snippet", id=video_id)
   response = request.execute()
 
@@ -100,6 +100,6 @@ if __name__ == "__main__":
   video_id = "4eqEc-qV89s"
   video_url = "https://www.youtube.com/watch?v=H9PcF5VrYpM&ab_channel=CumbiaNinjaUruguay"
 
-  # print(get_video_info_from_id(video_id))
+  # print(get_video_snippet_from_id(video_id))
   # print(get_videos_ids_from_url(video_url))
   print(get_video_id_from_video_url(video_url))
