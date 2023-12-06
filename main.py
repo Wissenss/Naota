@@ -17,8 +17,6 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
-guild_storage = {}
-
 @bot.event
 async def on_ready():
     await bot.add_cog(MusicPlayer())
