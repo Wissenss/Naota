@@ -80,6 +80,21 @@ def get_video_info_from_id(video_id):
 
   return response["items"][0]["snippet"]
 
+def get_videos_search_from_query(query):
+  #pre process the query, pending...
+
+  request = youtube.search().list(part="snippet", q=query)
+  response = request.execute()
+
+  return response["items"]
+
+# returns the first result video_id for the given query
+def get_video_id_from_search(query):
+  searches = get_videos_search_from_query(query)
+
+  if searches:
+    return searches[0]["id"]["videoId"]
+
 if __name__ == "__main__":
 
   video_id = "4eqEc-qV89s"
