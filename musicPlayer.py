@@ -14,12 +14,18 @@ class MusicPlayer(commands.Cog):
   def __init__(self):
     self.playing_video_id = None
     self.voice_channel = None
+
     self.queue = []
+    # NOTE the queue should store dictionaries with the following structure:
+    # self.queue[n] = {
+    #   video_id = ...
+    #   video_title = ...
+    # }
 
   @tasks.loop(seconds=1)
   async def sound_stream(self):
     if self.queue and self.voice_channel:
-      video_id = self.queue.pop(0)
+      video_id = self.queue.pop(0)["video_id"]
       self.playing_video_id = video_id
 
       # buscamos si existe en el buffer, si no, intentamos descargarlo
@@ -33,7 +39,6 @@ class MusicPlayer(commands.Cog):
         while True: # espera a que termine la canción 
           await asyncio.sleep(2)
           if not self.voice_channel.is_playing() and not self.voice_channel.is_paused():
-            print("breaking...")
             break
 
         os.remove(f"./buffer/{video_id}.mp3")
@@ -41,7 +46,15 @@ class MusicPlayer(commands.Cog):
     else:
       await self.__kill_sound_stream()
 
+  # def play_decorator(self, func):
+  #   async def wrapper(ctx, *args, **kwargs):
+
+  #     func()
+
+  #   return wrapper
+
   @commands.group(brief="play some music", description="reproduce the given youtube video or playlist url audio on voice channel", invoke_without_command=True)
+  # @play_decorator
   async def play(self, ctx, url = commands.parameter(default="", description="a youtube video or playlist url")):
     if not ctx.author.voice.channel:
       await ctx.send("conectate a un canal de voz")
@@ -55,7 +68,11 @@ class MusicPlayer(commands.Cog):
     self.voice_channel = voice_channel
 
     # agregamos la(s) canciones a la queue
-    self.queue = self.queue + youtubeUtils.get_videos_ids_from_url(url)
+    videos_info = youtubeUtils.get_videos_info_from_url(url)
+    if(videos_info):
+      self.queue = self.queue + videos_info
+    else:
+      return await ctx.send("not a valid url") 
 
     # elimina el mensaje para no causar spam
     message_id = ctx.message.id
@@ -86,7 +103,10 @@ class MusicPlayer(commands.Cog):
     title = search["snippet"]["title"]
     id = search["id"]["videoId"]
 
-    self.queue.append(id)
+    self.queue.append({
+      "video_id" : id,
+      "video_title" : title
+    })
 
     # elimina el mensaje para no causar spam
     message_id = ctx.message.id
@@ -141,7 +161,7 @@ class MusicPlayer(commands.Cog):
     if self.playing_video_id:
       playing_video_id = self.playing_video_id
 
-      info = youtubeUtils.get_video_snippet_from_id(playing_video_id)
+      info = youtubeUtils.get_video_snippet_from_video_id(playing_video_id)
 
       # message = f"playing: {info["title"]}"
       em = discord.Embed(title=info["title"], color=discord.Colour.red())
@@ -155,17 +175,40 @@ class MusicPlayer(commands.Cog):
     # elimina el mensaje para no causar spam
     await msg.delete()
 
-  @commands.command(brief="show the queue list (development)", description="shows the current song queue (development)")
+  @commands.group(brief="show the queue", description="shows the current song queue", invoke_without_command=True)
   async def queue(self, ctx):
     if self.queue:
-      await ctx.send(self.queue)
+      snippet = youtubeUtils.get_video_snippet_from_video_id(self.playing_video_id)
+
+      title=f"{len(self.queue)} songs on queue"
+      description = f"up next: {snippet['title']}"
+
+      em = discord.Embed(title=title, description=description)
+
+      await ctx.send(embed=em, mention_author=True)
+
+  @queue.command(name="list")
+  async def queue_list(self, ctx, max_index = 10):
+    if self.queue:
+      title=f"{len(self.queue)} songs on queue"
+      description = ""
+
+      for i in range(len(self.queue)):
+        if(i > max_index): 
+          break
+
+        description += f"{i} - {self.queue[i]["video_title"]}\n"
+
+      em = discord.Embed(title=title, description=description)
+
+      await ctx.send(embed=em, mention_author=True)
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):
     if self.queue:
       random.shuffle(self.queue)
-      video_id = self.queue[0]
-      info = youtubeUtils.get_video_snippet_from_id(video_id)
+      video_id = self.queue[0]["video_id"]
+      info = youtubeUtils.get_video_snippet_from_video_id(video_id)
 
       await ctx.send(f"queue shuffled, up next: {info["title"]}")
 

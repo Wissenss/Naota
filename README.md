@@ -8,7 +8,7 @@ Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable
 
 ## Installation
 #### Prequisites:
-1. [Python 3.1+](https://www.python.org/)
+1. [Python 3.8+](https://www.python.org/)
 2. [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) - For audio streaming
    
    odds are that you (like me) dont have this installed all ready. For a guide on how to do se we recomend [geeks for geeks tutorial](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/)
