@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 # import the diferent modules
 from musicPlayer import MusicPlayer
+# from competitiveProgramming import CompetitiveProgramming
 
 load_dotenv(override=True)
 
@@ -15,11 +16,20 @@ COMMAND_PREFIX = os.getenv("COMMAND_PREFIX")
 intents =  discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, application_id='1181086841445822474')
 
 @bot.event
 async def on_ready():
-    await bot.add_cog(MusicPlayer())
+	# print("online")
+	# print("loading cogs...")
+	
+	# await bot.load_extension("musicPlayer")
+	
+	# print("finished")
+  await bot.add_cog(MusicPlayer(bot))
+  # await bot.add_cog(CompetitiveProgramming())
+  # synced = await bot.tree.sync() #guild=[discord.abc.Snowflake(id=1178465444701687878)]
+  # print(f"syced: {len(synced)}")
 
 @commands.command(brief="pong", description="test for correct bot connection")
 async def ping(ctx):

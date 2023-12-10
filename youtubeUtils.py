@@ -157,4 +157,5 @@ if __name__ == "__main__":
 
   # print(get_video_snippet_from_id(video_id))
   # print(get_videos_ids_from_url(video_url))
-  print(get_video_id_from_video_url(video_url))
+  # print(get_video_id_from_video_url(video_url))
+  print(get_video_snippet_from_video_id(video_id)["title"])
