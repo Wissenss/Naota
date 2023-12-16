@@ -8,6 +8,7 @@ import random
 
 import youtubeUtils
 import guildStorage
+from pydub import AudioSegment
 
 class MusicPlayer(commands.Cog):
   """The music player command interface"""
@@ -136,6 +137,27 @@ class MusicPlayer(commands.Cog):
         await ctx.send(embed=em)
         voice_channel.pause()
 
+  @commands.command(brief="change streaming speed", description="speed up or slow down by a factor between 0.5 and 4")
+  async def speed(self, ctx, stretch_value=1.0):
+    voice_channel = ctx.voice_client
+    storage = guildStorage.get_storage(ctx.guild.id)
+
+    if voice_channel:
+      if voice_channel.is_playing():
+        voice_channel.pause()
+        if storage.playing_video["video_id"]:
+          em = discord.Embed(description="changing speed...", color=discord.Colour.random())
+          await ctx.send(embed=em)
+          playing_video_id = storage.playing_video["video_id"]
+          audio = AudioSegment.from_mp3(f"./buffer/{playing_video_id}.mp3")
+          audio.speedup(playback_speed=stretch_value) 
+          audio.export(f"./buffer/{playing_video_id}.mp3", format="mp3")
+          voice_channel.resume()
+        else:
+          message = "use !play <url> to hear some music"
+          em = discord.Embed(title="Error", description=message, color=discord.Colour.random())
+          await ctx.send(embed=em)
+
   @commands.command(brief="resume playing", description="resume the last audio playing")
   async def resume(self, ctx):
     voice_channel = ctx.voice_client
@@ -196,6 +218,9 @@ class MusicPlayer(commands.Cog):
       em = discord.Embed(title=title, description=description, color=discord.Colour.random())
 
       await ctx.send(embed=em, mention_author=True)
+    else:
+      em = discord.Embed(description="Add stuff to the queue!", color=discord.Colour.random())
+      await ctx.send(embed=em, mention_author=True)
 
   @queue.command(name="list")
   async def queue_list(self, ctx, max_index = 10):
@@ -252,7 +277,7 @@ class MusicPlayer(commands.Cog):
       video_id = storage.queue[0]["video_id"]
       info = youtubeUtils.get_video_snippet_from_video_id(video_id)
 
-      em = discord.Embed(title="queue shuffled", description=f"up next: {info["title"]}", color=discord.Colour.random())
+      em = discord.Embed(title="Queue shuffled", description=f"up next: {info["title"]}", color=discord.Colour.random())
 
       await ctx.send(embed=em)
 
