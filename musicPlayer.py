@@ -64,7 +64,8 @@ class MusicPlayer(commands.Cog):
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
-        return await ctx.send("conectate a un canal de voz")
+      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=discord.Colour.random())
+      return await ctx.send(embed=em)
   
     # conectamos a un canal, si no estamos en uno ya
     voice_channel = ctx.guild.voice_client
@@ -78,7 +79,8 @@ class MusicPlayer(commands.Cog):
       for info in videos_info:
         storage.queue.append(info["video_id"], info["video_title"])
     else:
-      return await ctx.send("not a valid url") 
+      em = discord.Embed(title="Error", description="not a valid url", color=discord.Colour.random())
+      return await ctx.send(embed=em)
 
     # elimina el mensaje para no causar spam
     await ctx.message.delete()
@@ -86,16 +88,19 @@ class MusicPlayer(commands.Cog):
     # mostramos la(s) cancion(es) a agregar
     more_text = f" and {len(videos_info) - 1} more" if len(videos_info) > 1 else ""
     if len(storage.queue) == len(videos_info):
-      await ctx.send(f"playing \"{videos_info[0]["video_title"]}\"{more_text} ...")
+      em = discord.Embed(description=f"playing \"{videos_info[0]["video_title"]}\"{more_text} ...", color=discord.Colour.random())
+      await ctx.send(embed=em)
     else:
-      await ctx.send(f"appending \"{videos_info[0]["video_title"]}\"{more_text} to queue...")
+      em = discord.Embed(description=f"appending \"{videos_info[0]["video_title"]}\"{more_text} to queue...", color=discord.Colour.random())
+      await ctx.send(embed=em)
 
   @play.command(name="search") #pending
   async def play_search(self, ctx, query = commands.parameter(default="", description="a youtube video title, if using spaces this should be contain within \"\"")):
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
-        return await ctx.send("conectate a un canal de voz")
+      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=discord.Colour.random())
+      return await ctx.send(embed=em)
   
     # conectamos a un canal, si no estamos en uno ya
     voice_channel = ctx.guild.voice_client
@@ -115,9 +120,11 @@ class MusicPlayer(commands.Cog):
 
     # mostramos la(s) cancion(es) a agregar
     if not storage.queue:
-      await ctx.send(f"playing best result: \"{title}\"")
+      em = discord.Embed(description=f"playing best result: \"{title}\"", color=discord.Colour.random())
+      await ctx.send(embed=em)
     else:
-      await ctx.send(f"appending best result: \"{title}\" to queue...")
+      em = discord.Embed(description=f"appending best result: \"{title}\" to queue...", color=discord.Colour.random())
+      await ctx.send(embed=em)
 
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):
@@ -125,7 +132,8 @@ class MusicPlayer(commands.Cog):
 
     if voice_channel:
       if voice_channel.is_playing():
-        await ctx.send("pausing...")
+        em = discord.Embed(description="pausing...", color=discord.Colour.random())
+        await ctx.send(embed=em)
         voice_channel.pause()
 
   @commands.command(brief="resume playing", description="resume the last audio playing")
@@ -134,7 +142,8 @@ class MusicPlayer(commands.Cog):
     
     if voice_channel:
       if voice_channel.is_paused():
-        await ctx.send("resuming...")
+        em = discord.Embed(description="resuming...", color=discord.Colour.random())
+        await ctx.send(embed=em)
         voice_channel.resume()
 
   @commands.command(brief="stops playing", description="stops audio reproduction and clears all currently queued sontgs")
@@ -162,13 +171,14 @@ class MusicPlayer(commands.Cog):
       info = youtubeUtils.get_video_snippet_from_video_id(playing_video_id)
 
       # message = f"playing: {info["title"]}"
-      em = discord.Embed(title=info["title"], color=discord.Colour.red())
+      em = discord.Embed(title=info["title"], color=discord.Colour.random())
       thumb = 'https://img.youtube.com/vi/' + playing_video_id + '/mqdefault.jpg'
       em.set_image(url=thumb)
       await msg.reply(embed=em, mention_author=True)
     else:
       message = "use !play <url> to hear some music"
-      await msg.reply(message, mention_author=True)
+      em = discord.Embed(title="Error", description=message, color=discord.Colour.random())
+      await msg.reply(embed=em, mention_author=True)
 
     # elimina el mensaje para no causar spam
     await msg.delete()
@@ -183,7 +193,7 @@ class MusicPlayer(commands.Cog):
       title=f"{len(storage.queue)} songs on queue"
       description = f"up next: {storage.queue[0]["video_title"]}"
 
-      em = discord.Embed(title=title, description=description)
+      em = discord.Embed(title=title, description=description, color=discord.Colour.random())
 
       await ctx.send(embed=em, mention_author=True)
 
@@ -201,7 +211,7 @@ class MusicPlayer(commands.Cog):
 
         description += f"{i} - {storage.queue[i]["video_title"]}\n"
 
-      em = discord.Embed(title=title, description=description)
+      em = discord.Embed(title=title, description=description, color=discord.Colour.random())
 
       await ctx.send(embed=em, mention_author=True)
 
@@ -226,7 +236,8 @@ class MusicPlayer(commands.Cog):
       if voice_channel.is_playing():
         voice_channel.stop()
 
-      await ctx.send("skiping...")
+      em = discord.Embed(description="skiping...", color=discord.Colour.random())
+      await ctx.send(embed=em)
 
       if os.path.exists(f"./buffer/{storage.playing_video["video_id"]}.mp3"):
         os.remove(f"./buffer/{storage.playing_video["video_id"]}.mp3")
@@ -241,7 +252,7 @@ class MusicPlayer(commands.Cog):
       video_id = storage.queue[0]["video_id"]
       info = youtubeUtils.get_video_snippet_from_video_id(video_id)
 
-      em = discord.Embed(title="queue shuffled", description=f"up next: {info["title"]}")
+      em = discord.Embed(title="queue shuffled", description=f"up next: {info["title"]}", color=discord.Colour.random())
 
       await ctx.send(embed=em)
 
