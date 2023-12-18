@@ -89,10 +89,10 @@ class MusicPlayer(commands.Cog):
     # mostramos la(s) cancion(es) a agregar
     more_text = f" and {len(videos_info) - 1} more" if len(videos_info) > 1 else ""
     if len(storage.queue) == len(videos_info):
-      em = discord.Embed(description=f"playing \"{videos_info[0]["video_title"]}\"{more_text} ...", color=discord.Colour.random())
+      em = discord.Embed(description=f"playing \"{videos_info[0]['video_title']}\"{more_text} ...", color=discord.Colour.random())
       await ctx.send(embed=em)
     else:
-      em = discord.Embed(description=f"appending \"{videos_info[0]["video_title"]}\"{more_text} to queue...", color=discord.Colour.random())
+      em = discord.Embed(description=f"appending \"{videos_info[0]['video_title']}\"{more_text} to queue...", color=discord.Colour.random())
       await ctx.send(embed=em)
 
   @play.command(name="search") #pending
@@ -150,8 +150,8 @@ class MusicPlayer(commands.Cog):
           await ctx.send(embed=em)
           playing_video_id = storage.playing_video["video_id"]
           audio = AudioSegment.from_mp3(f"./buffer/{playing_video_id}.mp3")
-          audio.speedup(playback_speed=stretch_value) 
-          audio.export(f"./buffer/{playing_video_id}.mp3", format="mp3")
+          edit_audio = audio.speedup(playback_speed=stretch_value) 
+          edit_audio.export(f"./buffer/{playing_video_id}.mp3", format="mp3")
           voice_channel.resume()
         else:
           message = "use !play <url> to hear some music"
@@ -213,7 +213,7 @@ class MusicPlayer(commands.Cog):
     #   snippet = youtubeUtils.get_video_snippet_from_video_id()
 
       title=f"{len(storage.queue)} songs on queue"
-      description = f"up next: {storage.queue[0]["video_title"]}"
+      description = f"up next: {storage.queue[0]['video_title']}"
 
       em = discord.Embed(title=title, description=description, color=discord.Colour.random())
 
@@ -234,7 +234,7 @@ class MusicPlayer(commands.Cog):
         if(i > max_index): 
           break
 
-        description += f"{i} - {storage.queue[i]["video_title"]}\n"
+        description += f"{i} - {storage.queue[i]['video_title']}\n"
 
       em = discord.Embed(title=title, description=description, color=discord.Colour.random())
 
@@ -264,8 +264,8 @@ class MusicPlayer(commands.Cog):
       em = discord.Embed(description="skiping...", color=discord.Colour.random())
       await ctx.send(embed=em)
 
-      if os.path.exists(f"./buffer/{storage.playing_video["video_id"]}.mp3"):
-        os.remove(f"./buffer/{storage.playing_video["video_id"]}.mp3")
+      if os.path.exists(f"./buffer/{storage.playing_video['video_id']}.mp3"):
+        os.remove(f"./buffer/{storage.playing_video['video_id']}.mp3")
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):
@@ -277,7 +277,7 @@ class MusicPlayer(commands.Cog):
       video_id = storage.queue[0]["video_id"]
       info = youtubeUtils.get_video_snippet_from_video_id(video_id)
 
-      em = discord.Embed(title="Queue shuffled", description=f"up next: {info["title"]}", color=discord.Colour.random())
+      em = discord.Embed(title="Queue shuffled", description=f"up next: {info['title']}", color=discord.Colour.random())
 
       await ctx.send(embed=em)
 
