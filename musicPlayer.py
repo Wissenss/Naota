@@ -137,7 +137,7 @@ class MusicPlayer(commands.Cog):
         await ctx.send(embed=em)
         voice_channel.pause()
 
-  @commands.command(brief="change streaming speed", description="speed up or slow down by a factor between 0.5 and 4")
+  @commands.command(brief="change streaming speed", description="speed up or slow down by a factor between 0.5 and 4", hidden=True)
   async def speed(self, ctx, stretch_value=1.0):
     voice_channel = ctx.voice_client
     storage = guildStorage.get_storage(ctx.guild.id)

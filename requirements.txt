@@ -5,6 +5,11 @@ urllib3
 
 yt-dlp
 
+pydub
+simpleaudio
+
 google-api-python-client
 google-auth-oauthlib 
 google-auth-httplib2
+
+gitpython
