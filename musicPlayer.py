@@ -15,7 +15,7 @@ class MusicPlayer(commands.Cog):
 
   def __init__(self, bot : commands.Cog):
     self.bot = bot
-    
+
 
   async def sound_stream(self, ctx):
     storage = guildStorage.get_storage(ctx.guild.id)
@@ -83,7 +83,7 @@ class MusicPlayer(commands.Cog):
       em = discord.Embed(description=f"appending \"{videos_info[0]['video_title']}\"{more_text} to queue...", color=discord.Colour.random())
       await ctx.send(embed=em)
 
-    self.__safe_start_sound_stream(ctx)
+    await self.__safe_start_sound_stream(ctx)
 
   @play.command(name="search") #pending
   async def play_search(self, ctx, query = commands.parameter(default="", description="a youtube video title, if using spaces this should be contain within \"\"")):
@@ -117,7 +117,7 @@ class MusicPlayer(commands.Cog):
       em = discord.Embed(description=f"appending best result: \"{title}\" to queue...", color=discord.Colour.random())
       await ctx.send(embed=em)
 
-    self.__safe_start_sound_stream(ctx)
+    await self.__safe_start_sound_stream(ctx)
 
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):
@@ -296,8 +296,6 @@ class MusicPlayer(commands.Cog):
 
     if not sound_stream.is_running():
       sound_stream.start(ctx)
-
-    sound_stream.start(ctx)
 
   async def __safe_kill_sound_stream(self, ctx):
     storage = guildStorage.get_storage(ctx.guild.id)
