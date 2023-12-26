@@ -15,50 +15,38 @@ class MusicPlayer(commands.Cog):
 
   def __init__(self, bot : commands.Cog):
     self.bot = bot
+    
 
-    self.sound_stream.start()
+  async def sound_stream(self, ctx):
+    storage = guildStorage.get_storage(ctx.guild.id)
 
-  @tasks.loop(seconds=1)
-  async def sound_stream(self):
-    for guild_id in guildStorage.get_storage_keys():
-      storage = guildStorage.get_storage(guild_id)
-      guild = self.bot.get_guild(guild_id)
+    guild = self.bot.get_guild(ctx.guild.id)
+    voice_client = guild.voice_client
 
-      voice_client = guild.voice_client
+    if storage.queue and voice_client:
+      video_info = storage.queue.pop(0)
+      video_id = video_info["video_id"]
 
-      if not voice_client: continue
+      # buscamos si existe en el buffer, si no, intentamos descargarlo
+      if not os.path.exists(f"./buffer/{video_id}.mp3"):
+        await self.__download(f"https://www.youtube.com/watch?v={video_id}", video_id)
 
-      #si no se esta tocando nada, intentamos borrar el ultimo reproducido
-      if storage.playing_video and not voice_client.is_playing() and not voice_client.is_paused():
-        video_id = storage.playing_video["video_id"]
+      # reproducimos en discord
+      if os.path.exists(f"./buffer/{video_id}.mp3"):
+        storage.playing_video = video_info
 
-        try:
-          if os.path.exists(f"./buffer/{video_id}.mp3"):
-            os.remove(f"./buffer/{video_id}.mp3")
-        except:
-          pass
+        voice_client.play(discord.FFmpegPCMAudio(f"./buffer/{video_id}.mp3"))
 
-      # si hay algo en la queue y no se esta tocando nada, iniciamos reproduccion
-      if storage.queue and not voice_client.is_playing() and not voice_client.is_paused():
-        video_info = storage.queue.pop(0)
-        video_id = video_info["video_id"]
-        video_title = video_info["video_title"]
+        while True: # espera a que termine la canción 
+          await asyncio.sleep(2)
+          if not voice_client.is_playing() and not voice_client.is_paused():
+            break
 
-        # buscamos si existe en el buffer, si no, intentamos descargarlo
-        if not os.path.exists(f"./buffer/{video_id}.mp3"):
-          await self.__download(f"https://www.youtube.com/watch?v={video_id}", video_id)
+      os.remove(f"./buffer/{video_id}.mp3")
 
-        if os.path.exists(f"./buffer/{video_id}.mp3"):
-          storage.playing_video = video_info
-
-          voice_client.play(discord.FFmpegPCMAudio(f"./buffer/{video_id}.mp3"))
-
-      # si no hay nada en la queue, desconectamos del canal
-      if not storage.queue and voice_client.is_connected() and not voice_client.is_playing() and not voice_client.is_paused():
-        storage.playing_video = None
-        storage.queue = guildStorage.SongQueue()
-        await voice_client.disconnect()
-        continue
+    else:
+      storage.sound_stream.stop()
+      storage.sound_stream = None
 
   @commands.group(brief="play some music", description="reproduce the given youtube video or playlist url audio on voice channel", invoke_without_command=True)
   async def play(self, ctx, url = commands.parameter(default="", description="a youtube video or playlist url")):
@@ -95,6 +83,8 @@ class MusicPlayer(commands.Cog):
       em = discord.Embed(description=f"appending \"{videos_info[0]['video_title']}\"{more_text} to queue...", color=discord.Colour.random())
       await ctx.send(embed=em)
 
+    self.__safe_start_sound_stream(ctx)
+
   @play.command(name="search") #pending
   async def play_search(self, ctx, query = commands.parameter(default="", description="a youtube video title, if using spaces this should be contain within \"\"")):
     storage = guildStorage.get_storage(ctx.guild.id)
@@ -126,6 +116,8 @@ class MusicPlayer(commands.Cog):
     else:
       em = discord.Embed(description=f"appending best result: \"{title}\" to queue...", color=discord.Colour.random())
       await ctx.send(embed=em)
+
+    self.__safe_start_sound_stream(ctx)
 
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):
@@ -177,6 +169,7 @@ class MusicPlayer(commands.Cog):
     storage.queue = guildStorage.SongQueue()
 
     await voice_channel.disconnect()
+    await self.__safe_kill_sound_stream(ctx)
 
   @commands.command(brief="know what song you are hearing", description="retrives information about the current audio playing")
   async def playing(self, ctx):
@@ -254,6 +247,9 @@ class MusicPlayer(commands.Cog):
     voice_channel = ctx.voice_client
 
     if len(storage.queue) - 1 >= queue_index:
+      em = discord.Embed(description="skiping...", color=discord.Colour.random())
+      await ctx.send(embed=em)
+
       # pop every song that is before
       for _ in range(queue_index):
         storage.queue.pop(0)
@@ -261,11 +257,10 @@ class MusicPlayer(commands.Cog):
       if voice_channel.is_playing():
         voice_channel.stop()
 
-      em = discord.Embed(description="skiping...", color=discord.Colour.random())
-      await ctx.send(embed=em)
+      if storage.sound_stream:
+        await self.__safe_kill_sound_stream(ctx)
 
-      if os.path.exists(f"./buffer/{storage.playing_video['video_id']}.mp3"):
-        os.remove(f"./buffer/{storage.playing_video['video_id']}.mp3")
+      await self.__safe_start_sound_stream(ctx)
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):
@@ -282,13 +277,37 @@ class MusicPlayer(commands.Cog):
       await ctx.send(embed=em)
 
   ########################   utils   ########################
-  async def __kill_sound_stream(self):
-    await self.voice_channel.disconnect()
-    self.voice_channel.cleanup()
-    self.voice_channel = None
-    self.queue = []
-    self.playing_video_id = None
-    self.sound_stream.cancel()
+      
+  # this method will handle creating or obtaining a sound_stream task that is related with a sepcific guild (i.e. making a new thread for each guild)
+  async def __get_sound_stream(self, ctx):
+    storage = guildStorage.get_storage(ctx.guild.id)
+
+    if storage.sound_stream == None:
+      storage.sound_stream = tasks.loop(seconds=5)(self.sound_stream)
+
+    return storage.sound_stream
+
+  async def __start_sound_stream(self, ctx):
+    sound_stream = await self.__get_sound_stream(ctx)
+    sound_stream.start(ctx)
+
+  async def __safe_start_sound_stream(self, ctx):
+    sound_stream = await self.__get_sound_stream(ctx)
+
+    if not sound_stream.is_running():
+      sound_stream.start(ctx)
+
+    sound_stream.start(ctx)
+
+  async def __safe_kill_sound_stream(self, ctx):
+    storage = guildStorage.get_storage(ctx.guild.id)
+    sound_stream = storage.sound_stream
+
+    if sound_stream:
+      if sound_stream.is_running():
+        sound_stream.cancel()
+
+    storage.sound_stream = None
 
   async def __download(self, url, file_name = "song"):
     # buscamos el/los archivos en youtube

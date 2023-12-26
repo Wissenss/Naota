@@ -20,6 +20,8 @@ class GuildStorage:
     self.playing_video = None
     self.queue = SongQueue()
 
+    self.sound_stream = None
+
 class SongQueue(list):
   def __init__(self):
     super().__init__()
