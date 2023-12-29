@@ -7,13 +7,9 @@ import os
 import asyncio
 import random
 
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
+from settings import *
 
 # initialize youtube http api client
-CODEFORCES_TOKEN = os.getenv("CODEFORCES_TOKEN")
-
 codeforces = CodeforcesAPI.Codeforces(api_key=CODEFORCES_TOKEN)
 
 class CompetitiveProgramming(commands.Cog):

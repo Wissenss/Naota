@@ -3,46 +3,47 @@ from discord.ext import commands
 
 import time
 import os
-from dotenv import load_dotenv
+import logging
 
 import git
 
-# import the diferent modules
+from settings import *
+
+from variousUtils import getDiscordMainColor
+
+############ cogs ############
 from musicPlayer import MusicPlayer
 # from competitiveProgramming import CompetitiveProgramming
-
-load_dotenv(override=True)
-
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-COMMAND_PREFIX = os.getenv("COMMAND_PREFIX")
+##############################
 
 intents =  discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, application_id='1181086841445822474')
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents) #, application_id='1181086841445822474' this sould ve an environment variable! not in use for now, so I keep it commented...
 
 @bot.event
 async def on_ready():
-	# print("online")
-	# print("loading cogs...")
-	
-	# await bot.load_extension("musicPlayer")
-	
-	# print("finished")
+	LOGGER.log(logging.INFO, "--------------------------- Initializing ---------------------------")
+	LOGGER.log(logging.INFO, "loading cogs...")
 	await bot.add_cog(MusicPlayer(bot))
-	# await bot.add_cog(CompetitiveProgramming())
-	# synced = await bot.tree.sync() #guild=[discord.abc.Snowflake(id=1178465444701687878)]
-	# print(f"syced: {len(synced)}")
 	
+	LOGGER.log(logging.INFO, "loading other commands...")
 	bot.add_command(ping)
 	bot.add_command(changelog)
 
+	LOGGER.log(logging.INFO, "all set up!")
+	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")
+
 @commands.command(brief="pong", description="test for correct bot connection")
 async def ping(ctx):
+	LOGGER.log(logging.INFO, f"ping called (Guild id: {ctx.guild.id})")
+	
 	await ctx.send("pong")
 		 
 @commands.command(brief="shows the most recent changes", description="get a list of all the recent improvements, new features and bug fixes done to naota")
 async def changelog(ctx):
+	LOGGER.log(logging.INFO, f"changelog called (Guild id: {ctx.guild.id})")
+
 	# obtain the log from local repo
 	repo = git.Repo(os.getcwd())
 
@@ -63,7 +64,7 @@ async def changelog(ctx):
 
 		logs += f"[{date.tm_year}/{date.tm_mon}/{date.tm_mday}] - {message}\n"
 
-	em = discord.Embed(title=f"Naota v_{version}", description=logs, color=discord.Color.dark_blue())
+	em = discord.Embed(title=f"Naota v_{version}", description=logs, color=getDiscordMainColor())
 	await ctx.send(embed=em)
 
 bot.run(DISCORD_TOKEN)

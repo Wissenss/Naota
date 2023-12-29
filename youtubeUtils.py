@@ -4,13 +4,10 @@ import os
 from urllib import parse
 
 from googleapiclient.discovery import build
-from dotenv import load_dotenv
 
-load_dotenv(override=True)
+from settings import *
 
 # initialize youtube http api client
-YOUTUBE_TOKEN = os.getenv("YOUTUBE_TOKEN")
-
 youtube = build("youtube", "v3" , developerKey=YOUTUBE_TOKEN)
 
 class YoutubeUrlType(Enum):

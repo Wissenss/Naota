@@ -7,7 +7,7 @@ The Naota project is developed for academic popuses only. We do not hold ourselv
 Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable/) and [YouTube Data API](https://developers.google.com/youtube/v3)
 
 ## Installation
-#### Prequisites:
+#### Prerequisites:
 1. [Python 3.8+](https://www.python.org/)
 2. [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) - For audio streaming
    
@@ -27,4 +27,6 @@ DISCORD_TOKEN = "YOUR DISCORD TOKEN"
 YOUTUBE_TOKEN = "YOUR YOUTUBE API TOKEN"
 
 COMMAND_PREFIX = "/"
+
+MAIN_COLOR = "dark_blue"
 ```

@@ -6,8 +6,10 @@ import os
 import asyncio
 import random
 
+from variousUtils import getDiscordMainColor
 import youtubeUtils
 import guildStorage
+from settings import *
 from pydub import AudioSegment
 
 class MusicPlayer(commands.Cog):
@@ -15,7 +17,6 @@ class MusicPlayer(commands.Cog):
 
   def __init__(self, bot : commands.Cog):
     self.bot = bot
-
 
   async def sound_stream(self, ctx):
     storage = guildStorage.get_storage(ctx.guild.id)
@@ -48,12 +49,16 @@ class MusicPlayer(commands.Cog):
       storage.sound_stream.stop()
       storage.sound_stream = None
 
+      if voice_client: await voice_client.disconnect()
+
   @commands.group(brief="play some music", description="reproduce the given youtube video or playlist url audio on voice channel", invoke_without_command=True)
   async def play(self, ctx, url = commands.parameter(default="", description="a youtube video or playlist url")):
+    LOGGER.log(logging.INFO, f"play called (Guild id: {ctx.guild.id})")
+    
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
-      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=discord.Colour.random())
+      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=getDiscordMainColor())
       return await ctx.send(embed=em)
   
     # conectamos a un canal, si no estamos en uno ya
@@ -68,7 +73,7 @@ class MusicPlayer(commands.Cog):
       for info in videos_info:
         storage.queue.append(info["video_id"], info["video_title"])
     else:
-      em = discord.Embed(title="Error", description="not a valid url", color=discord.Colour.random())
+      em = discord.Embed(title="Error", description="not a valid url", color=getDiscordMainColor())
       return await ctx.send(embed=em)
 
     # elimina el mensaje para no causar spam
@@ -77,20 +82,21 @@ class MusicPlayer(commands.Cog):
     # mostramos la(s) cancion(es) a agregar
     more_text = f" and {len(videos_info) - 1} more" if len(videos_info) > 1 else ""
     if len(storage.queue) == len(videos_info):
-      em = discord.Embed(description=f"playing \"{videos_info[0]['video_title']}\"{more_text} ...", color=discord.Colour.random())
-      await ctx.send(embed=em)
+      em = discord.Embed(description=f"playing \"{videos_info[0]['video_title']}\"{more_text} ...", color=getDiscordMainColor())
     else:
-      em = discord.Embed(description=f"appending \"{videos_info[0]['video_title']}\"{more_text} to queue...", color=discord.Colour.random())
-      await ctx.send(embed=em)
+      em = discord.Embed(description=f"appending \"{videos_info[0]['video_title']}\"{more_text} to queue...", color=getDiscordMainColor())
+
+    await ctx.send(embed=em)
 
     await self.__safe_start_sound_stream(ctx)
 
-  @play.command(name="search") #pending
+  @play.command(name="search") 
   async def play_search(self, ctx, query = commands.parameter(default="", description="a youtube video title, if using spaces this should be contain within \"\"")):
+    LOGGER.log(logging.INFO, f"play search called (Guild id: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
-      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=discord.Colour.random())
+      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=getDiscordMainColor())
       return await ctx.send(embed=em)
   
     # conectamos a un canal, si no estamos en uno ya
@@ -111,26 +117,34 @@ class MusicPlayer(commands.Cog):
 
     # mostramos la(s) cancion(es) a agregar
     if not storage.queue:
-      em = discord.Embed(description=f"playing best result: \"{title}\"", color=discord.Colour.random())
+      em = discord.Embed(description=f"playing best result: \"{title}\"", color=getDiscordMainColor())
       await ctx.send(embed=em)
     else:
-      em = discord.Embed(description=f"appending best result: \"{title}\" to queue...", color=discord.Colour.random())
+      em = discord.Embed(description=f"appending best result: \"{title}\" to queue...", color=getDiscordMainColor())
       await ctx.send(embed=em)
 
     await self.__safe_start_sound_stream(ctx)
 
+  @play.command(name="auto", hidden=True) #[TODO]
+  async def play_auto(self, ctx, category = commands.parameter(default="lofi", description="an array of video categories to look for, for example \"lofi\" will start auto addition of lofi style music")):
+    LOGGER.log(logging.INFO, f"play auto called (Guild id: {ctx.guild.id})")
+    pass
+
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):
+    LOGGER.log(logging.INFO, f"pause called (Guild id: {ctx.guild.id})")
     voice_channel = ctx.voice_client
 
     if voice_channel:
       if voice_channel.is_playing():
-        em = discord.Embed(description="pausing...", color=discord.Colour.random())
+        em = discord.Embed(description="pausing...", color=getDiscordMainColor())
         await ctx.send(embed=em)
         voice_channel.pause()
 
   @commands.command(brief="change streaming speed", description="speed up or slow down by a factor between 0.5 and 4", hidden=True)
   async def speed(self, ctx, stretch_value=1.0):
+    LOGGER.log(logging.INFO, f"speed called (Guild id: {ctx.guild.id})")
+
     voice_channel = ctx.voice_client
     storage = guildStorage.get_storage(ctx.guild.id)
 
@@ -138,7 +152,7 @@ class MusicPlayer(commands.Cog):
       if voice_channel.is_playing():
         voice_channel.pause()
         if storage.playing_video["video_id"]:
-          em = discord.Embed(description="changing speed...", color=discord.Colour.random())
+          em = discord.Embed(description="changing speed...", color=getDiscordMainColor())
           await ctx.send(embed=em)
           playing_video_id = storage.playing_video["video_id"]
           audio = AudioSegment.from_mp3(f"./buffer/{playing_video_id}.mp3")
@@ -147,21 +161,23 @@ class MusicPlayer(commands.Cog):
           voice_channel.resume()
         else:
           message = "use !play <url> to hear some music"
-          em = discord.Embed(title="Error", description=message, color=discord.Colour.random())
+          em = discord.Embed(title="Error", description=message, color=getDiscordMainColor())
           await ctx.send(embed=em)
 
   @commands.command(brief="resume playing", description="resume the last audio playing")
   async def resume(self, ctx):
+    LOGGER.log(logging.INFO, f"resume called (Guild id: {ctx.guild.id})")
     voice_channel = ctx.voice_client
     
     if voice_channel:
       if voice_channel.is_paused():
-        em = discord.Embed(description="resuming...", color=discord.Colour.random())
+        em = discord.Embed(description="resuming...", color=getDiscordMainColor())
         await ctx.send(embed=em)
         voice_channel.resume()
 
   @commands.command(brief="stops playing", description="stops audio reproduction and clears all currently queued sontgs")
   async def stop(self, ctx):
+    LOGGER.log(logging.INFO, f"stop called (Guild id: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
     voice_channel = ctx.voice_client
 
@@ -173,6 +189,8 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="know what song you are hearing", description="retrives information about the current audio playing")
   async def playing(self, ctx):
+    LOGGER.log(logging.INFO, f"playing called (Guild id: {ctx.guild.id})")
+
     storage = guildStorage.get_storage(ctx.guild.id)
     
     message = ""
@@ -186,13 +204,13 @@ class MusicPlayer(commands.Cog):
       info = youtubeUtils.get_video_snippet_from_video_id(playing_video_id)
 
       # message = f"playing: {info["title"]}"
-      em = discord.Embed(title=info["title"], color=discord.Colour.random())
+      em = discord.Embed(title=info["title"], color=getDiscordMainColor())
       thumb = 'https://img.youtube.com/vi/' + playing_video_id + '/mqdefault.jpg'
       em.set_image(url=thumb)
       await msg.reply(embed=em, mention_author=True)
     else:
       message = "use !play <url> to hear some music"
-      em = discord.Embed(title="Error", description=message, color=discord.Colour.random())
+      em = discord.Embed(title="Error", description=message, color=getDiscordMainColor())
       await msg.reply(embed=em, mention_author=True)
 
     # elimina el mensaje para no causar spam
@@ -200,6 +218,8 @@ class MusicPlayer(commands.Cog):
 
   @commands.group(brief="show the queue", description="shows the current song queue", invoke_without_command=True)
   async def queue(self, ctx):
+    LOGGER.log(logging.INFO, f"queue called (Guild id: {ctx.guild.id})")
+
     storage = guildStorage.get_storage(ctx.guild.id)
     
     if storage.queue:
@@ -208,15 +228,16 @@ class MusicPlayer(commands.Cog):
       title=f"{len(storage.queue)} songs on queue"
       description = f"up next: {storage.queue[0]['video_title']}"
 
-      em = discord.Embed(title=title, description=description, color=discord.Colour.random())
+      em = discord.Embed(title=title, description=description, color=getDiscordMainColor())
 
       await ctx.send(embed=em, mention_author=True)
     else:
-      em = discord.Embed(description="Add stuff to the queue!", color=discord.Colour.random())
+      em = discord.Embed(description="Add stuff to the queue!", color=getDiscordMainColor())
       await ctx.send(embed=em, mention_author=True)
 
   @queue.command(name="list")
   async def queue_list(self, ctx, max_index = 10):
+    LOGGER.log(logging.INFO, f"queue list called (Guild id: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
 
     if storage.queue:
@@ -229,12 +250,13 @@ class MusicPlayer(commands.Cog):
 
         description += f"{i} - {storage.queue[i]['video_title']}\n"
 
-      em = discord.Embed(title=title, description=description, color=discord.Colour.random())
+      em = discord.Embed(title=title, description=description, color=getDiscordMainColor())
 
       await ctx.send(embed=em, mention_author=True)
 
   @commands.command(brief="clear the queue", description="clears all currently queued songs")
   async def flush(self, ctx):
+    LOGGER.log(logging.INFO, f"flush called (Guild id: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
     # voice_channel = ctx.voice_client
 
@@ -243,11 +265,12 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="skip the current song", description="stops audio playing for the current song and plays another from the queue, by default the next one")
   async def skip(self, ctx, queue_index = commands.parameter(default=0, description="skip to this position in the queue")):
+    LOGGER.log(logging.INFO, f"skip called (Guild id: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
     voice_channel = ctx.voice_client
 
     if len(storage.queue) - 1 >= queue_index:
-      em = discord.Embed(description="skiping...", color=discord.Colour.random())
+      em = discord.Embed(description="skiping...", color=getDiscordMainColor())
       await ctx.send(embed=em)
 
       # pop every song that is before
@@ -264,6 +287,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):
+    LOGGER.log(logging.INFO, f"shuffle called (Guild id: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
 
     if storage.queue:
@@ -272,7 +296,7 @@ class MusicPlayer(commands.Cog):
       video_id = storage.queue[0]["video_id"]
       info = youtubeUtils.get_video_snippet_from_video_id(video_id)
 
-      em = discord.Embed(title="Queue shuffled", description=f"up next: {info['title']}", color=discord.Colour.random())
+      em = discord.Embed(title="Queue shuffled", description=f"up next: {info['title']}", color=getDiscordMainColor())
 
       await ctx.send(embed=em)
 
