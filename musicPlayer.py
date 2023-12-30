@@ -24,9 +24,35 @@ class MusicPlayer(commands.Cog):
     guild = self.bot.get_guild(ctx.guild.id)
     voice_client = guild.voice_client
 
+    if voice_client:
+      if len(voice_client.channel.members) == 1:
+        print("exiting stream")
+        storage.sound_stream.stop()
+        storage.sound_stream = None
+
+        # reset autoplay options
+        storage.isAutoPlay = False
+        storage.autoPlayInclusions = []
+        storage.autoPlayExclusions = []
+
+        await voice_client.disconnect()
+        return
+
+    if storage.isAutoPlay and not storage.queue:
+      search = youtubeUtils.get_video_seach("", storage.autoPlayInclusions, storage.autoPlayExclusions, _videoDuration="medium", _videoCategoryId="10")
+
+      for item in search:
+        video_id = item["id"]["videoId"]
+        video_title = item["snippet"]["title"]
+
+        if not video_id in storage.autoPlayExclusions:
+          storage.queue.append(video_id, video_title)
+          break
+
     if storage.queue and voice_client:
       video_info = storage.queue.pop(0)
       video_id = video_info["video_id"]
+      video_title = video_info["video_title"]
 
       # buscamos si existe en el buffer, si no, intentamos descargarlo
       if not os.path.exists(f"./buffer/{video_id}.mp3"):
@@ -35,6 +61,9 @@ class MusicPlayer(commands.Cog):
       # reproducimos en discord
       if os.path.exists(f"./buffer/{video_id}.mp3"):
         storage.playing_video = video_info
+
+        if storage.isAutoPlay:
+          storage.autoPlayExclusions.append(video_id)
 
         voice_client.play(discord.FFmpegPCMAudio(f"./buffer/{video_id}.mp3"))
 
@@ -53,7 +82,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.group(brief="play some music", description="reproduce the given youtube video or playlist url audio on voice channel", invoke_without_command=True)
   async def play(self, ctx, url = commands.parameter(default="", description="a youtube video or playlist url")):
-    LOGGER.log(logging.INFO, f"play called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"play called (Guild ID: {ctx.guild.id})")
     
     storage = guildStorage.get_storage(ctx.guild.id)
   
@@ -92,7 +121,7 @@ class MusicPlayer(commands.Cog):
 
   @play.command(name="search") 
   async def play_search(self, ctx, query = commands.parameter(default="", description="a youtube video title, if using spaces this should be contain within \"\"")):
-    LOGGER.log(logging.INFO, f"play search called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"play search called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
@@ -125,14 +154,46 @@ class MusicPlayer(commands.Cog):
 
     await self.__safe_start_sound_stream(ctx)
 
-  @play.command(name="auto", hidden=True) #[TODO]
-  async def play_auto(self, ctx, category = commands.parameter(default="lofi", description="an array of video categories to look for, for example \"lofi\" will start auto addition of lofi style music")):
-    LOGGER.log(logging.INFO, f"play auto called (Guild id: {ctx.guild.id})")
-    pass
+  @play.command(name="auto", description="Enhance the playlist by automatically queuing songs that match the given category, if non provided this will turn off autoplay mode.")
+  async def play_auto(self, ctx, category = commands.parameter(default="", description="video categorie to look for, for example \"lofi\" will start auto addition of lofi style music.")):
+    LOGGER.log(logging.INFO, f"play auto called (Guild ID: {ctx.guild.id})")
+
+    storage = guildStorage.get_storage(ctx.guild.id)
+
+    if category != "":
+      if not ctx.author.voice:
+        em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=getDiscordMainColor())
+        return await ctx.send(embed=em)
+    
+      # conectamos a un canal, si no estamos en uno ya
+      voice_channel = ctx.guild.voice_client
+      if not voice_channel:
+        voice_channel = await ctx.author.voice.channel.connect()
+
+      storage.isAutoPlay = True
+      storage.autoPlayInclusions.append(category)
+      title = "Autoplay mode is on"
+      description = f"Now looking for songs matching \"{category}\""
+
+      storage.autoPlayExclusions.append("cover")
+      storage.autoPlayExclusions.append("shorts")
+
+    else:
+      storage.isAutoPlay = False
+      storage.autoPlayInclusions = []
+      storage.autoPlayExclusions = []
+
+      title = "Autoplay mode is off"
+      description = f""
+
+    em = discord.Embed(title=title, description=description, color=getDiscordMainColor())
+    await ctx.send(embed=em)
+
+    await self.__safe_start_sound_stream(ctx)
 
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):
-    LOGGER.log(logging.INFO, f"pause called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"pause called (Guild ID: {ctx.guild.id})")
     voice_channel = ctx.voice_client
 
     if voice_channel:
@@ -143,7 +204,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="change streaming speed", description="speed up or slow down by a factor between 0.5 and 4", hidden=True)
   async def speed(self, ctx, stretch_value=1.0):
-    LOGGER.log(logging.INFO, f"speed called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"speed called (Guild ID: {ctx.guild.id})")
 
     voice_channel = ctx.voice_client
     storage = guildStorage.get_storage(ctx.guild.id)
@@ -166,7 +227,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="resume playing", description="resume the last audio playing")
   async def resume(self, ctx):
-    LOGGER.log(logging.INFO, f"resume called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"resume called (Guild ID: {ctx.guild.id})")
     voice_channel = ctx.voice_client
     
     if voice_channel:
@@ -177,19 +238,24 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="stops playing", description="stops audio reproduction and clears all currently queued sontgs")
   async def stop(self, ctx):
-    LOGGER.log(logging.INFO, f"stop called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"stop called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
     voice_channel = ctx.voice_client
 
     # flush the song queue
     storage.queue = guildStorage.SongQueue()
 
+    # reset autoplay options
+    storage.isAutoPlay = False
+    storage.autoPlayInclusions = []
+    storage.autoPlayExclusions = []
+
     await voice_channel.disconnect()
     await self.__safe_kill_sound_stream(ctx)
 
   @commands.command(brief="know what song you are hearing", description="retrives information about the current audio playing")
   async def playing(self, ctx):
-    LOGGER.log(logging.INFO, f"playing called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"playing called (Guild ID: {ctx.guild.id})")
 
     storage = guildStorage.get_storage(ctx.guild.id)
     
@@ -218,7 +284,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.group(brief="show the queue", description="shows the current song queue", invoke_without_command=True)
   async def queue(self, ctx):
-    LOGGER.log(logging.INFO, f"queue called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"queue called (Guild ID: {ctx.guild.id})")
 
     storage = guildStorage.get_storage(ctx.guild.id)
     
@@ -237,7 +303,7 @@ class MusicPlayer(commands.Cog):
 
   @queue.command(name="list")
   async def queue_list(self, ctx, max_index = 10):
-    LOGGER.log(logging.INFO, f"queue list called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"queue list called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
 
     if storage.queue:
@@ -256,7 +322,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="clear the queue", description="clears all currently queued songs")
   async def flush(self, ctx):
-    LOGGER.log(logging.INFO, f"flush called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"flush called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
     # voice_channel = ctx.voice_client
 
@@ -265,11 +331,11 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="skip the current song", description="stops audio playing for the current song and plays another from the queue, by default the next one")
   async def skip(self, ctx, queue_index = commands.parameter(default=0, description="skip to this position in the queue")):
-    LOGGER.log(logging.INFO, f"skip called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"skip called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
     voice_channel = ctx.voice_client
 
-    if len(storage.queue) - 1 >= queue_index:
+    if len(storage.queue) >= queue_index:
       em = discord.Embed(description="skiping...", color=getDiscordMainColor())
       await ctx.send(embed=em)
 
@@ -287,7 +353,7 @@ class MusicPlayer(commands.Cog):
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):
-    LOGGER.log(logging.INFO, f"shuffle called (Guild id: {ctx.guild.id})")
+    LOGGER.log(logging.INFO, f"shuffle called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
 
     if storage.queue:

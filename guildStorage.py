@@ -20,6 +20,10 @@ class GuildStorage:
     self.playing_video = None
     self.queue = SongQueue()
 
+    self.isAutoPlay = False
+    self.autoPlayExclusions = [] # we exclude previously played videos
+    self.autoPlayInclusions = [] # we include a list of tags or categories
+
     self.sound_stream = None
 
 class SongQueue(list):

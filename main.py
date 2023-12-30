@@ -36,13 +36,13 @@ async def on_ready():
 
 @commands.command(brief="pong", description="test for correct bot connection")
 async def ping(ctx):
-	LOGGER.log(logging.INFO, f"ping called (Guild id: {ctx.guild.id})")
+	LOGGER.log(logging.INFO, f"ping called (Guild ID: {ctx.guild.id})")
 	
 	await ctx.send("pong")
 		 
 @commands.command(brief="shows the most recent changes", description="get a list of all the recent improvements, new features and bug fixes done to naota")
 async def changelog(ctx):
-	LOGGER.log(logging.INFO, f"changelog called (Guild id: {ctx.guild.id})")
+	LOGGER.log(logging.INFO, f"changelog called (Guild ID: {ctx.guild.id})")
 
 	# obtain the log from local repo
 	repo = git.Repo(os.getcwd())
