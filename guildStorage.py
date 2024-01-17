@@ -1,18 +1,3 @@
-"""  private stuff  """
-__storage = {}
-
-
-"""  public interface  """
-def get_storage_keys():
-  return list(__storage.keys())
-
-def get_storage(guild_id):
-  if guild_id not in __storage:
-    __storage[guild_id] = GuildStorage(guild_id)
-
-  return __storage[guild_id]
-
-
 """  data models  """  
 class GuildStorage:
   def __init__(self, guild_id):
@@ -49,6 +34,21 @@ class SongQueue(list):
   #     if item["video_id"] == video_id:
   #       return item["video_title"]
 
+"""  private stuff  """
+__storage = {}
+
+
+"""  public interface  """
+def get_storage_keys():
+  return list(__storage.keys())
+
+def get_storage(guild_id) -> GuildStorage:
+  if guild_id not in __storage:
+    __storage[guild_id] = GuildStorage(guild_id)
+
+  return __storage[guild_id]
+
+#################### TESTS #################### 
 if __name__ == "__main__":
 
   """  SONG QUEUE  """  

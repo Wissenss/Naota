@@ -39,7 +39,7 @@ class MusicPlayer(commands.Cog):
         return
 
     if storage.isAutoPlay and not storage.queue:
-      search = youtubeUtils.get_video_seach("", storage.autoPlayInclusions, storage.autoPlayExclusions, _videoDuration="medium", _videoCategoryId="10")
+      search = youtubeUtils.get_video_seach("music video", storage.autoPlayInclusions, storage.autoPlayExclusions, _type="video", _videoEmbeddable="true", _videoDuration="medium")
 
       for item in search:
         video_id = item["id"]["videoId"]
@@ -177,6 +177,8 @@ class MusicPlayer(commands.Cog):
 
       storage.autoPlayExclusions.append("cover")
       storage.autoPlayExclusions.append("shorts")
+      storage.autoPlayExclusions.append("live")
+      storage.autoPlayExclusions.append("livestream")
 
     else:
       storage.isAutoPlay = False
@@ -190,6 +192,46 @@ class MusicPlayer(commands.Cog):
     await ctx.send(embed=em)
 
     await self.__safe_start_sound_stream(ctx)
+
+  @play.command(name="default", description="Add all the songs from the default server playlist to queue", hidden=True)
+  async def play_default(self, ctx):
+    LOGGER.log(logging.INFO, f"play default called (Guild ID: {ctx.guild.id})")
+    
+    storage = guildStorage.get_storage(ctx.guild.id)
+
+    #ensure author is connected to a voice channel
+    if not ctx.author.voice:
+      em = discord.Embed(title="Error", description="conéctate a un canal de voz", color=getDiscordMainColor())
+      return await ctx.send(embed=em)
+    
+    #connect to a voice channel if not in one already
+    voice_channel = ctx.guild.voice_client
+    if not voice_channel:
+      voice_channel = await ctx.author.voice.channel.connect()
+
+    #get the playlist from long term storage
+    videos_list = []
+    with open("./default.txt", "r") as file:
+      videos_list = file.readlines()
+
+    #add songs to playlist
+    for video in videos_list:
+      title = video.split(",")[0]
+      url = video.split(",")[1]
+
+      storage.queue.append(youtubeUtils.get_video_id_from_video_url(url), title)
+
+    if len(storage.queue) == len(videos_list):
+      description = f"Now playing {storage.queue.get_video_title(0)}... from default playlist"
+    else:
+      description = f"appending {storage.queue.get_video_title(0)} and {len(videos_list) - 1} other to queue, from default playlist"
+
+    em = discord.Embed(description=description, color=getDiscordMainColor())
+    await ctx.send(embed=em)
+
+    #start the stream
+    await self.__safe_start_sound_stream(ctx)
+    
 
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):

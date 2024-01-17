@@ -132,26 +132,26 @@ def get_videos_urls_from_url(url):
 
   return videos_urls
 
-def get_video_seach(query="", inclusions=[], exclusions=[], _order="rating", _safeSearch="none", _type="video", _videoDuration="any", _videoCategoryId="10", _maxResults=45): # videoCategoryId 10 is for music
+def get_video_seach(query="", inclusions=[], exclusions=[], _order=None, _safeSearch="none", _type=None, _videoDuration="any", _videoCategoryId=None, _maxResults=45, _videoEmbeddable="any"): # videoCategoryId 10 is for music
   #pre process the query, pending...
 
   #add the inclusions to query
   for inclusion in inclusions:
-    query += f" |{inclusion} "
+    query += f"|{inclusion} "
 
   #add exclusions to query
   for exclusion in exclusions:
-    query += f" -{exclusion} "
+    query += f"-{exclusion} "
 
-  request = youtube.search().list(part="snippet", q=query, order=_order, safeSearch=_safeSearch, type=_type, videoCategoryId=_videoCategoryId, videoDuration=_videoDuration, maxResults=_maxResults)
+  print(query)
+
+  request = youtube.search().list(part="snippet", q=query, order=_order, safeSearch=_safeSearch, type=_type, videoCategoryId=_videoCategoryId, videoDuration=_videoDuration, maxResults=_maxResults, videoEmbeddable=_videoEmbeddable)
   response = request.execute()
 
   return response["items"]
 
 def get_videos_search_from_query(query):
-  response = get_video_seach(query)
-
-  return response
+  return get_video_seach(query)
 
 # returns the first result video_id for the given query
 def get_video_id_from_search(query):
