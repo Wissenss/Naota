@@ -13,3 +13,9 @@ COMMAND_PREFIX = os.getenv("COMMAND_PREFIX")
 MAIN_COLOR = os.getenv("MAIN_COLOR")
 
 LOGGER = logging.getLogger('discord')
+
+handler = logging.FileHandler("./naota.log")
+handler.formatter = logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
+#handler.formatter = logging.Formatter(style=logging._FormatStyle.)
+
+LOGGER.addHandler(handler)
