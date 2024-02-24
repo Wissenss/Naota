@@ -232,7 +232,6 @@ class MusicPlayer(commands.Cog):
     #start the stream
     await self.__safe_start_sound_stream(ctx)
     
-
   @commands.command(brief="pause playing", description="pause the current audio playing, to resume use !resume")
   async def pause(self, ctx):
     LOGGER.log(logging.INFO, f"pause called (Guild ID: {ctx.guild.id})")
@@ -371,7 +370,7 @@ class MusicPlayer(commands.Cog):
     # flush the song queue
     storage.queue = guildStorage.SongQueue()
 
-  @commands.command(brief="skip the current song", description="stops audio playing for the current song and plays another from the queue, by default the next one")
+  @commands.command(brief="skip any number of songs", description="stops audio playing for the current song and plays another from the queue, by default the next one")
   async def skip(self, ctx, queue_index = commands.parameter(default=0, description="skip to this position in the queue")):
     LOGGER.log(logging.INFO, f"skip called (Guild ID: {ctx.guild.id})")
     storage = guildStorage.get_storage(ctx.guild.id)
@@ -392,6 +391,20 @@ class MusicPlayer(commands.Cog):
         await self.__safe_kill_sound_stream(ctx)
 
       await self.__safe_start_sound_stream(ctx)
+
+  @commands.command(brief="deletes one song from queue", description="deletes the given index song from queue")
+  async def pop(self, ctx, queue_index = commands.parameter(default=0, description="delete this song from queue")):
+    LOGGER.log(logging.INFO, f"pop called [Origin](Guild ID: {ctx.guild.id}) [Arguments](queue_index: {queue_index})")
+
+    storage = guildStorage.get_storage(ctx.guild.id)
+
+    if len(storage.queue) >= queue_index:
+      em = discord.Embed(description="poping...", color=getDiscordMainColor())
+      await ctx.send(embed=em)
+
+      # pop the song
+      storage.queue.pop(queue_index)
+
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):
