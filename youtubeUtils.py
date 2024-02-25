@@ -27,7 +27,7 @@ def sanitizar_url(url:str):
 
   return url
 
-def get_url_type(url:str):
+def get_url_type(url:str) -> YoutubeUrlType:
   params = get_params_from_url(url)
 
   if params.get('list') != None: 
@@ -37,29 +37,43 @@ def get_url_type(url:str):
   else: 
     return YoutubeUrlType.OTHER
 
-def get_videos_snippet_from_playlist_id(playlist_id):
+def get_videos_snippet_from_playlist_id(playlist_id:str, page_token=None):
   videos_snippets = []
 
-  request = youtube.playlistItems().list(part='snippet', maxResults=50, playlistId=playlist_id)
+  request = youtube.playlistItems().list(part='snippet', maxResults=50, playlistId=playlist_id, pageToken=page_token)
   response = request.execute()
 
   for item in response['items']:
     videos_snippets.append(item["snippet"])
 
-  return videos_snippets
+  while 'nextPageToken' in response:
+    next_page_token = response['nextPageToken']
 
-def get_videos_ids_from_playlist_id(playlist_id):
+    if len(videos_snippets) >= 250:
+      return videos_snippets, next_page_token
+
+    request = youtube.playlistItems().list(part='snippet', maxResults=50, playlistId=playlist_id, pageToken=next_page_token)
+    response = request.execute()
+
+    for item in response['items']:
+      videos_snippets.append(item["snippet"])
+
+  return videos_snippets, ""
+
+def get_videos_ids_from_playlist_id(playlist_id, page_token=None):
   videos_ids = []
 
-  for item in get_videos_snippet_from_playlist_id(playlist_id):
+  videos_snippets, next_page_token = get_videos_snippet_from_playlist_id(playlist_id, page_token)
+
+  for item in videos_snippets:
       videos_ids.append(item['resourceId']['videoId'])
 
-  return videos_ids
+  return videos_ids, next_page_token
 
-def get_videos_snippet_from_playlist_url(url):
+def get_videos_snippet_from_playlist_url(url, page_token=None):
   params = get_params_from_url(url)
   playlist_id = params["list"]
-  return get_videos_snippet_from_playlist_id(playlist_id)
+  return get_videos_snippet_from_playlist_id(playlist_id, page_token)
 
 def get_video_snippet_from_video_id(video_id):
   request = youtube.videos().list(part="id,snippet", id=video_id)
@@ -94,13 +108,14 @@ def get_videos_snippet_from_url(url):
   return None
 
 # the info object is a dicttionary containting: {video_id : "...", video_title : "..."}
-def get_videos_info_from_url(url):
+def get_videos_info_from_url(url, page_token=None):
   url_type = get_url_type(url)
 
   videos_info = []
+  next_page_token = ""
 
   if(url_type == YoutubeUrlType.PLAYLIST):
-    snippets =  get_videos_snippet_from_playlist_url(url)
+    snippets, next_page_token = get_videos_snippet_from_playlist_url(url, page_token)
 
     for snippet in snippets:
       videos_info.append({
@@ -109,7 +124,7 @@ def get_videos_info_from_url(url):
       })
 
   elif (url_type == YoutubeUrlType.VIDEO):
-    video_id = get_video_id_from_video_url(url);
+    video_id = get_video_id_from_video_url(url)
     snippet = get_video_snippet_from_video_id(video_id)
     
     videos_info.append({
@@ -117,10 +132,10 @@ def get_videos_info_from_url(url):
       "video_title" : snippet["title"]
     })
 
-  return videos_info
+  return videos_info, next_page_token
 
 # returns an array of videos_ids contained in the specified resource of the provided url
-def get_videos_ids_from_url(url):
+def get_videos_ids_from_url(url, page_token=None):
   url_type = get_url_type(url)
 
   if(url_type == YoutubeUrlType.PLAYLIST):
@@ -173,23 +188,12 @@ if __name__ == "__main__":
 
   video_id = "4eqEc-qV89s"
   video_url = "https://www.youtube.com/watch?v=H9PcF5VrYpM&ab_channel=CumbiaNinjaUruguay"
-  # playlist_url = "https://www.youtube.com/watch?v=5anLPw0Efmo&list=PLqcFhJVNu0Lo9UVts6I4Hod67lg6JWJ5l&index=6&ab_channel=EvanescenceVEVO"
+  playlist_url = "https://www.youtube.com/watch?v=5anLPw0Efmo&list=PLqcFhJVNu0Lo9UVts6I4Hod67lg6JWJ5l&index=6&ab_channel=EvanescenceVEVO" #this is a youtube mix
   
-  playlist_url = "https://www.youtube.com/playlist?list=PLA8UYwj0JlFi7Mb7EC7tettmIfRJWlCDr"
+  # playlist_url = "https://www.youtube.com/playlist?list=PLA8UYwj0JlFi7Mb7EC7tettmIfRJWlCDr"
   playlist_id = get_params_from_url(playlist_url)['list']
 
-  #video_Ids = get_videos_ids_from_url(playlist_url)
-
-  # print(video_Ids)
-
-  # request = youtube.playlistItems().list(part="contentDetails,id,snippet,status", maxResults=10, playlistId=playlist_id)
-  # print(request.execute())
-
-  # request = youtube.videos().list(part="snippet", id=video_id)
-  # print(request.execute())
-
-  # request = youtube.
-
+  print(len(get_videos_snippet_from_playlist_id(playlist_id)))
   # print(get_video_snippet_from_video_id(playlist_url))
   # print(get_url_type(playlist_url))
   # print(get_url_type(video_url))

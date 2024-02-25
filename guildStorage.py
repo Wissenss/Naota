@@ -5,11 +5,17 @@ class GuildStorage:
     self.playing_video = None
     self.queue = SongQueue()
 
+    self.next_page_tokens = []
+
     self.isAutoPlay = False
     self.autoPlayExclusions = [] # we exclude previously played videos
     self.autoPlayInclusions = [] # we include a list of tags or categories
 
     self.sound_stream = None
+
+  def addNextPageToken(self, next_page_token:str, original_url:str):
+    if next_page_token != "" and (not next_page_token in self.next_page_tokens):
+      self.next_page_tokens.append((next_page_token, original_url))
 
 class SongQueue(list):
   def __init__(self):

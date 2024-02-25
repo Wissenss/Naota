@@ -49,6 +49,22 @@ class MusicPlayer(commands.Cog):
           storage.queue.append(video_id, video_title)
           break
 
+    if storage.next_page_tokens and not storage.queue:
+      LOGGER.log(logging.DEBUG, f"no songs on queue... appending from last youtube mix... (Guild ID: {ctx.guild.id})")
+
+      print(len(storage.next_page_tokens))
+      index = random.randint(0, len(storage.next_page_tokens) - 1)
+      
+      page_token, url = storage.next_page_tokens[index]
+
+      videos_info, next_page_token = youtubeUtils.get_videos_info_from_url(url, page_token)
+
+      if(videos_info):
+        for info in videos_info:
+          storage.queue.append(info["video_id"], info["video_title"])
+
+      storage.next_page_tokens[index] = (next_page_token, url)      
+
     if storage.queue and voice_client:
       video_info = storage.queue.pop(0)
       video_id = video_info["video_id"]
@@ -102,12 +118,14 @@ class MusicPlayer(commands.Cog):
     if not voice_channel:
       voice_channel = await ctx.author.voice.channel.connect()
 
-    videos_info = youtubeUtils.get_videos_info_from_url(url)
+    videos_info, next_page_token = youtubeUtils.get_videos_info_from_url(url)
 
     # agregamos la(s) canciones a la queue
     if(videos_info):
       for info in videos_info:
         storage.queue.append(info["video_id"], info["video_title"])
+        storage.addNextPageToken(next_page_token, url)
+
     else:
       em = discord.Embed(title="Error", description="not a valid url", color=getDiscordMainColor())
       return await ctx.send(embed=em)
