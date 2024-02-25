@@ -83,7 +83,14 @@ class MusicPlayer(commands.Cog):
   @commands.group(brief="play some music", description="reproduce the given youtube video or playlist url audio on voice channel", invoke_without_command=True)
   async def play(self, ctx, url = commands.parameter(default="", description="a youtube video or playlist url")):
     LOGGER.log(logging.INFO, f"play called (Guild ID: {ctx.guild.id})")
-    
+
+    url = youtubeUtils.sanitizar_url(url)
+
+    if (youtubeUtils.get_url_type(url) == youtubeUtils.YoutubeUrlType.OTHER):
+      em = discord.Embed(title="Error", description="not a valid url", color=getDiscordMainColor())
+      await ctx.send(embed=em)
+      return
+
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
@@ -122,6 +129,7 @@ class MusicPlayer(commands.Cog):
   @play.command(name="search") 
   async def play_search(self, ctx, query = commands.parameter(default="", description="a youtube video title, if using spaces this should be contain within \"\"")):
     LOGGER.log(logging.INFO, f"play search called (Guild ID: {ctx.guild.id})")
+    
     storage = guildStorage.get_storage(ctx.guild.id)
   
     if not ctx.author.voice:
@@ -404,7 +412,6 @@ class MusicPlayer(commands.Cog):
 
       # pop the song
       storage.queue.pop(queue_index)
-
 
   @commands.command(brief="mix it up", description="changes the orden in which the upcomig songs on queue will be played")
   async def shuffle(self, ctx):

@@ -18,7 +18,16 @@ class YoutubeUrlType(Enum):
 def get_params_from_url(url):
   return dict(parse.parse_qsl(parse.urlsplit(url).query))
 
-def get_url_type(url):
+def sanitizar_url(url:str):
+  # checamos si la url esta en short format, si es asi, la pasamos a la forma normal
+  if 'youtu.be' in url:
+    splited_url = url.split('/')
+
+    url = f'http://www.youtube.com/watch?v={splited_url[-1]}'
+
+  return url
+
+def get_url_type(url:str):
   params = get_params_from_url(url)
 
   if params.get('list') != None: 
@@ -164,8 +173,27 @@ if __name__ == "__main__":
 
   video_id = "4eqEc-qV89s"
   video_url = "https://www.youtube.com/watch?v=H9PcF5VrYpM&ab_channel=CumbiaNinjaUruguay"
+  # playlist_url = "https://www.youtube.com/watch?v=5anLPw0Efmo&list=PLqcFhJVNu0Lo9UVts6I4Hod67lg6JWJ5l&index=6&ab_channel=EvanescenceVEVO"
+  
+  playlist_url = "https://www.youtube.com/playlist?list=PLA8UYwj0JlFi7Mb7EC7tettmIfRJWlCDr"
+  playlist_id = get_params_from_url(playlist_url)['list']
 
+  #video_Ids = get_videos_ids_from_url(playlist_url)
+
+  # print(video_Ids)
+
+  # request = youtube.playlistItems().list(part="contentDetails,id,snippet,status", maxResults=10, playlistId=playlist_id)
+  # print(request.execute())
+
+  # request = youtube.videos().list(part="snippet", id=video_id)
+  # print(request.execute())
+
+  # request = youtube.
+
+  # print(get_video_snippet_from_video_id(playlist_url))
+  # print(get_url_type(playlist_url))
+  # print(get_url_type(video_url))
   # print(get_video_snippet_from_id(video_id))
   # print(get_videos_ids_from_url(video_url))
   # print(get_video_id_from_video_url(video_url))
-  print(get_video_snippet_from_video_id(video_id)["title"])
+  ##print(get_video_snippet_from_video_id(video_id)["title"])
