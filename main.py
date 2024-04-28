@@ -16,6 +16,8 @@ from musicPlayer import MusicPlayer
 # from competitiveProgramming import CompetitiveProgramming
 ##############################
 
+import helpCommand
+
 intents =  discord.Intents.default()
 intents.message_content = True
 
@@ -30,6 +32,8 @@ async def on_ready():
 	LOGGER.log(logging.INFO, "loading other commands...")
 	bot.add_command(ping)
 	bot.add_command(changelog)
+
+	bot.help_command = helpCommand.CustomHelpCommand()
 
 	LOGGER.log(logging.INFO, "all set up!")
 	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")

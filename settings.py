@@ -16,6 +16,8 @@ LOGGER = logging.getLogger('discord')
 
 handler = logging.FileHandler("./naota.log")
 handler.formatter = logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
-#handler.formatter = logging.Formatter(style=logging._FormatStyle.)
 
 LOGGER.addHandler(handler)
+
+# hard-coded values
+KUVA_GUILD_ID =  "638943159581147137"
