@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from settings import COMMAND_PREFIX
@@ -25,6 +26,10 @@ def get_help_embed(mapping):
         continue
 
       desciption_ += f"\n**{COMMAND_PREFIX}{command.qualified_name}: ** {command.brief}"
+
+      if isinstance(command, commands.Group):
+        command : commands.Group
+        desciption_ += f" ({len(command.commands)} sub-commands)" 
 
   desciption_ += f"\n\nType `{COMMAND_PREFIX}help command_name` for more info on a command. You can also type `{COMMAND_PREFIX}help category_name` for more info on a category"
 
@@ -73,6 +78,8 @@ def get_cog_help_embed(cog : commands.Cog):
 
   em = discord.Embed(title=f"", description=description_, color=getDiscordMainColor())
 
+  return em
+
 class CustomHelpCommand(commands.HelpCommand):
   def __init__(self):
     super().__init__()
@@ -80,7 +87,7 @@ class CustomHelpCommand(commands.HelpCommand):
     self.command_attrs["brief"] = "show this message"
 
     self.command_attrs["description"] = f"show al list of commands and its description"
-    self.command_attrs["description"] += self.help_usage_str
+    self.command_attrs["description"] += f"\n\nType `{COMMAND_PREFIX}help command_name` for more info on a command. You can also type `{COMMAND_PREFIX}help category_name` for more info on a category"
 
   async def send_bot_help(self, mapping):
     em = get_help_embed(mapping)

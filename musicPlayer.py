@@ -12,6 +12,8 @@ import guildStorage
 from settings import *
 from pydub import AudioSegment
 
+from pytube import YouTube
+
 class MusicPlayer(commands.Cog):
   """The music player command interface"""
 
@@ -445,6 +447,33 @@ class MusicPlayer(commands.Cog):
       em = discord.Embed(title="Queue shuffled", description=f"up next: {info['title']}", color=getDiscordMainColor())
 
       await ctx.send(embed=em)
+
+  @commands.command(hidden=True)
+  async def musicTest(self, ctx : commands.context):
+    voice_channel = await ctx.author.voice.channel.connect()
+
+    #youtube_url = "https://www.youtube.com/watch?v=7qFfFVSerQo"
+    youtube_url = 'https://www.youtube.com/watch?v=4Q46xYqUwZQ'
+    #youtube_url = "https://www.youtube.com/watch?v=jfKfPfyJRdk"
+    yt = YouTube(youtube_url)
+    video_streams = yt.streams.filter() #only_audio=True
+
+    print("the video streams")
+    for stream in video_streams:
+      print(stream)
+
+    # for video_stream in video_streams:
+
+    video_stream = video_streams.get_audio_only()
+
+    print(f"playing video stream with itag: {video_stream.itag}")
+
+    audio_stream = discord.FFmpegOpusAudio(video_stream.url)
+
+      # while voice_channel.is_playing():
+      #   await asyncio.sleep(1)
+
+    voice_channel.play(audio_stream)
 
   ########################   utils   ########################
       
