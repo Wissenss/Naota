@@ -5,6 +5,7 @@ import datetime
 import asyncio
 import uuid
 import random
+import subprocess
 
 import discord
 from discord.ext import tasks, commands
@@ -53,25 +54,46 @@ class AudioResource:
 
       self.duration = delta.total_seconds()
 
+
 class AudioBuffer:
-  __buffer_path = "./buffer"
+  __buffer_path = ".\\buffer"
 
   @staticmethod
-  def __exists(filename : str):
-    filepath = os.path.join(AudioBuffer.__buffer_path, filename)
-    return os.path.isfile(filepath)
+  def get_file_path(resource : AudioResource):
+    filepath = os.path.join(AudioBuffer.__buffer_path, f"{str(resource.uuid)}.mp3")
+    return filepath
 
   @staticmethod
   def exists(resource : AudioResource):
-    return AudioBuffer.__exists(f"{str(resource.uuid)}.mp3")
+    filename = f"{str(resource.uuid)}.mp3"
+    return AudioBuffer.exists_filename(filename)
+
+  @staticmethod 
+  def exists_filename(filename : str):
+    filepath = os.path.join(AudioBuffer.__buffer_path, filename)
+    return AudioBuffer.exists_filepath(filepath)
+
+  @staticmethod
+  def exists_filepath(filepath : str):
+    return os.path.isfile(filepath)
 
   @staticmethod
   def remove(resource : AudioResource):
-    AudioBuffer.__remove(f"{str(resource.uuid)}.mp3")
+    filename = f"{str(resource.uuid)}.mp3"
+    AudioBuffer.remove_filename(filename)
+
+    filename_org = f"{str(resource.uuid)}_origianl.mp3"
+    if AudioBuffer.exists_filename(filename_org):
+      AudioBuffer.remove_filename(filename_org)
+    
 
   @staticmethod
-  def __remove(filename : str):
+  def remove_filename(filename : str):
     filepath = os.path.join(AudioBuffer.__buffer_path, filename)
+    AudioBuffer.remove_filepath(filepath)
+
+  @staticmethod
+  def remove_filepath(filepath : str):
     os.remove(filepath)
 
   @staticmethod
@@ -201,6 +223,9 @@ class AudioStream:
 
     self._stream_task = tasks.loop(seconds=1)(self.__stream_task)
 
+    # internal workflow flags
+    self.is_changing_speed = False
+
   def start_stream(self, voice_channel : discord.VoiceClient):
     if self._stream_task.is_running():
       raise Exception("Stream is already running!")
@@ -233,6 +258,40 @@ class AudioStream:
   def is_running(self) -> bool:
     return self._stream_task.is_running()
 
+  def set_speed(self, speed : float):
+    print(f"changing speed x{speed}")
+    self.is_changing_speed = True
+
+    if self.voice_channel.is_playing():
+      self.voice_channel.stop()
+
+    if AudioBuffer.exists(self.audio):
+      self.audio.source.cleanup()
+      filename     = f"{str(self.audio.uuid)}.mp3"
+      filepath     = AudioBuffer.get_file_path(self.audio)
+      filename_org = f"{str(self.audio.uuid)}_original.mp3"
+      filepath_org = os.path.join(AudioBuffer._AudioBuffer__buffer_path, filename_org)
+
+      if not AudioBuffer.exists_filename(filename_org):
+        os.rename(filepath, filepath_org)
+      else:
+        AudioBuffer.remove_filename(filename)
+
+      ffmpeg_cmd = [
+        "ffmpeg",
+        "-i", filepath_org,
+        "-filter:a", f"atempo={speed}",
+        filepath
+      ]
+
+      subprocess.run(ffmpeg_cmd)
+
+      self.audio.source = discord.FFmpegOpusAudio(filepath)
+      self.voice_channel.play(self.audio.source)
+
+    self.is_changing_speed = False
+    print(f"changing speed finished")
+
   async def __stream_task(self): # this is a loop, think of it as such: once the start_stream function is called this will run every second
     if self.voice_channel == None:
       return
@@ -247,6 +306,9 @@ class AudioStream:
         self.stop_stream()
         return
     
+    if self.is_changing_speed:
+      return
+
     if self.voice_channel.is_paused():
       return
 
@@ -254,7 +316,8 @@ class AudioStream:
       return
 
     # if not playing and audio is not none, this means the song just ended, so we can delete the .mp3 file if any
-    elif self.audio != None:
+    elif self.audio != None and self.is_changing_speed == False:
+      print("song ended, deletin file...")
       if AudioBuffer.exists(self.audio):
         AudioBuffer.remove(self.audio)
 
@@ -290,9 +353,6 @@ class MusicPlayer(commands.Cog):
 
   def __init__(self, bot : commands.bot):
     self.bot = bot
-
-    self.buffer_directory = "./buffer/"
-
     self.constant_buffer_purge.start()
 
   @tasks.loop(minutes=60)
@@ -514,3 +574,25 @@ class MusicPlayer(commands.Cog):
     em.description = "stoping"
 
     await ctx.send(embed=em)
+
+  @commands.hybrid_command(brief="speed up the current song", description="speed up the current audio stream by <speed> times, the value for <speed> should be in the range [0.5, 5.0]. doesn't work with livestreams")
+  async def speed(self, ctx, speed : float):
+    em = discord.Embed(color=getDiscordMainColor())
+    
+    if speed < 0 or speed > 5:
+      em.description = "Invalid speed"
+      return await ctx.send(embed=em)
+    
+    audio_stream = AudioStreamsHandler.get_stream(ctx.guild.id, self.bot) 
+
+    if audio_stream.audio.is_live:
+      em.description = "`!speed` doesn't work with livestreams"
+      return await ctx.send(embed=em)
+
+    em.description = f"Changing speed..."
+    msg = await ctx.send(embed=em)
+
+    audio_stream.set_speed(speed)
+
+    em.description = f"Speed X{speed}"
+    await msg.edit(embed=em)

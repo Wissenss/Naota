@@ -1,7 +1,7 @@
 __pycache__/
 
 .env
-.mp3
+*.mp3
 
 /buffer
 /release
@@ -10,4 +10,4 @@ bugs.txt
 discordPermisions.txt
 naota.log
 
-.db
+*.db
