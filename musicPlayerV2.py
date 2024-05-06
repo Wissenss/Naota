@@ -425,11 +425,17 @@ class MusicPlayer(commands.Cog):
     audio_stream = AudioStreamsHandler.get_stream(ctx.guild.id, self.bot)
     audio_stream.queue.append_resource(audio)
 
-    em.description = f"**Appending** **[{audio.title}]({url})**"
+    em.description = f"**Appending** **[{audio.title}]({audio.original_url})**"
 
     if not audio_stream.is_running():
       audio_stream.start_stream(voice_channel)
-      em.description = f"**Playing** **[{audio.title}]({url})**"
+      em.description = f"**Playing** **[{audio.title}]({audio.original_url})**"
+
+    em.set_image(url=audio.thumbnail)
+
+    # 9: !play url / !play search show "(live)" tag if resource is a live stream
+    if (audio.is_live == True):
+      em.description += " (live)"
 
     await msg.edit(embed=em)
     return
@@ -466,10 +472,13 @@ class MusicPlayer(commands.Cog):
   async def playing(self, ctx : commands.Context):
     audio_stream = AudioStreamsHandler.get_stream(ctx.guild.id, self.bot)
 
-    em = discord.Embed(title="", description=f"**Playing** **[{audio_stream.audio.title}]({audio_stream.audio.url})**", color=getDiscordMainColor())
+    em = discord.Embed(title="", description=f"**Playing** **[{audio_stream.audio.title}]({audio_stream.audio.original_url})**", color=getDiscordMainColor())
+
+    if (audio_stream.audio.is_live == True):
+      em.description += " (live)"
 
     if (audio_stream.is_paused()):
-      em.description += " (paused) "
+      em.description += " (paused)"
 
     em.set_image(url=audio_stream.audio.thumbnail)
 
@@ -575,7 +584,7 @@ class MusicPlayer(commands.Cog):
 
     await ctx.send(embed=em)
 
-  @commands.hybrid_command(brief="speed up the current song", description="speed up the current audio stream by <speed> times, the value for <speed> should be in the range [0.5, 5.0]. doesn't work with livestreams")
+  @commands.hybrid_command(brief="speed up the current song", description="modify audio tempo by <speed> factor, accepts values in range [0.5, 5], doesn't work in livestreams")
   async def speed(self, ctx, speed : float):
     em = discord.Embed(color=getDiscordMainColor())
     
