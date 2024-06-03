@@ -1,0 +1,4 @@
+Base aplanada,-170,5000,0
+Cantera deepslate,960,-47,3617
+Granja brujas,-1318,67,-819
+Pillager outpost,-790,139,3830

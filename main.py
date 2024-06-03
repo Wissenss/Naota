@@ -18,6 +18,7 @@ from utils.variousUtils import getDiscordMainColor
 #from musicPlayer import MusicPlayer
 from cogs.musicPlayerCogV2 import MusicPlayer
 from cogs.kuvaCog import KuvaCog 
+from cogs.chemsCog import ChemsCog
 ##############################
 
 from commands.helpCommand import *
@@ -40,6 +41,7 @@ async def setup_hook():
 	LOGGER.log(logging.INFO, "loading cogs...")
 	await bot.add_cog(MusicPlayer(bot))
 	# await bot.add_cog(KuvaCog(bot))
+	await bot.add_cog(ChemsCog(bot))
 	
 	LOGGER.log(logging.INFO, "loading other commands...")
 	bot.add_command(ping)
