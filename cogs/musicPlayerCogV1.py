@@ -6,8 +6,8 @@ import os
 import asyncio
 import random
 
-from variousUtils import getDiscordMainColor
-import youtubeUtils
+from utils.variousUtils import getDiscordMainColor
+from utils.youtubeUtils import * 
 import guildStorage
 from settings import *
 from pydub import AudioSegment
@@ -41,7 +41,7 @@ class MusicPlayer(commands.Cog):
         return
 
     if storage.isAutoPlay and not storage.queue:
-      search = youtubeUtils.get_video_seach("music video", storage.autoPlayInclusions, storage.autoPlayExclusions, _type="video", _videoEmbeddable="true", _videoDuration="medium")
+      search = get_video_seach("music video", storage.autoPlayInclusions, storage.autoPlayExclusions, _type="video", _videoEmbeddable="true", _videoDuration="medium")
 
       for item in search:
         video_id = item["id"]["videoId"]
@@ -59,7 +59,7 @@ class MusicPlayer(commands.Cog):
       
       page_token, url = storage.next_page_tokens[index]
 
-      videos_info, next_page_token = youtubeUtils.get_videos_info_from_url(url, page_token)
+      videos_info, next_page_token = get_videos_info_from_url(url, page_token)
 
       if(videos_info):
         for info in videos_info:
@@ -102,9 +102,9 @@ class MusicPlayer(commands.Cog):
   async def play(self, ctx, url = commands.parameter(default="", description="a youtube video or playlist url")):
     LOGGER.log(logging.INFO, f"play called (Guild ID: {ctx.guild.id})")
 
-    url = youtubeUtils.sanitizar_url(url)
+    url = sanitizar_url(url)
 
-    if (youtubeUtils.get_url_type(url) == youtubeUtils.YoutubeUrlType.OTHER):
+    if (get_url_type(url) == YoutubeUrlType.OTHER):
       em = discord.Embed(title="Error", description="not a valid url", color=getDiscordMainColor())
       await ctx.send(embed=em)
       return
@@ -120,7 +120,7 @@ class MusicPlayer(commands.Cog):
     if not voice_channel:
       voice_channel = await ctx.author.voice.channel.connect()
 
-    videos_info, next_page_token = youtubeUtils.get_videos_info_from_url(url)
+    videos_info, next_page_token = get_videos_info_from_url(url)
 
     # agregamos la(s) canciones a la queue
     if(videos_info):
@@ -161,7 +161,7 @@ class MusicPlayer(commands.Cog):
     if not voice_channel:
       voice_channel = await ctx.author.voice.channel.connect()
 
-    search = youtubeUtils.get_videos_search_from_query(query)[0]
+    search = get_videos_search_from_query(query)[0]
 
     # agregamos la(s) canciones a la queue
     title = search["snippet"]["title"]
@@ -247,7 +247,7 @@ class MusicPlayer(commands.Cog):
       title = video.split(",")[0]
       url = video.split(",")[1]
 
-      storage.queue.append(youtubeUtils.get_video_id_from_video_url(url), title)
+      storage.queue.append(get_video_id_from_video_url(url), title)
 
     if len(storage.queue) == len(videos_list):
       description = f"Now playing {storage.queue.get_video_title(0)}... from default playlist"
@@ -336,7 +336,7 @@ class MusicPlayer(commands.Cog):
     if storage.playing_video["video_id"]:
       playing_video_id = storage.playing_video["video_id"]
 
-      info = youtubeUtils.get_video_snippet_from_video_id(playing_video_id)
+      info = get_video_snippet_from_video_id(playing_video_id)
 
       # message = f"playing: {info["title"]}"
       em = discord.Embed(title=info["title"], color=getDiscordMainColor())
@@ -358,7 +358,7 @@ class MusicPlayer(commands.Cog):
     storage = guildStorage.get_storage(ctx.guild.id)
     
     if storage.queue:
-    #   snippet = youtubeUtils.get_video_snippet_from_video_id()
+    #   snippet = get_video_snippet_from_video_id()
 
       title=f"{len(storage.queue)} songs on queue"
       description = f"up next: {storage.queue[0]['video_title']}"
@@ -442,7 +442,7 @@ class MusicPlayer(commands.Cog):
       random.shuffle(storage.queue)
 
       video_id = storage.queue[0]["video_id"]
-      info = youtubeUtils.get_video_snippet_from_video_id(video_id)
+      info = get_video_snippet_from_video_id(video_id)
 
       em = discord.Embed(title="Queue shuffled", description=f"up next: {info['title']}", color=getDiscordMainColor())
 

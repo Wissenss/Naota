@@ -12,15 +12,15 @@ import sqlite3
 
 from settings import *
 
-from variousUtils import getDiscordMainColor
+from utils.variousUtils import getDiscordMainColor
 
 ############ cogs ############
 #from musicPlayer import MusicPlayer
-from musicPlayerV2 import MusicPlayer
-from Kuva.kuvaCog import KuvaCog 
+from cogs.musicPlayerCogV2 import MusicPlayer
+from cogs.kuvaCog import KuvaCog 
 ##############################
 
-import helpCommand
+from commands.helpCommand import *
 
 intents =  discord.Intents.default()
 intents.message_content = True
@@ -46,7 +46,7 @@ async def setup_hook():
 	bot.add_command(changelog)
 	bot.add_command(sync)
 
-	bot.help_command = helpCommand.CustomHelpCommand()
+	bot.help_command = CustomHelpCommand()
 
 	LOGGER.log(logging.INFO, "all set up!")
 	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")
@@ -105,13 +105,13 @@ async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : s
 		mapping: Dict[Optional[commands.Cog], List[commands.Command[Any, ..., Any]]] = {cog: cog.get_commands() for cog in bot.cogs.values()}
 		mapping[None] = [c for c in bot.commands if c.cog is None]
 
-		em = helpCommand.get_help_embed(mapping)
+		em = get_help_embed(mapping)
 		await interaction.response.send_message(embed=em)
 		return
 
 	cog = bot.get_cog(resource)
 	if cog != None:
-		em = helpCommand.get_cog_help_embed(cog)
+		em = get_cog_help_embed(cog)
 		await interaction.response.send_message(embed=em)
 		return
 
@@ -145,11 +145,11 @@ async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : s
 				cmd = found				
 
 	if isinstance(cmd, commands.Group):
-		em = helpCommand.get_group_help_embed(cmd)
+		em = get_group_help_embed(cmd)
 		await interaction.response.send_message(embed=em)
 		return
 	else:
-		em = helpCommand.get_command_help_embed(cmd)
+		em = get_command_help_embed(cmd)
 		await interaction.response.send_message(embed=em)
 		return 
 

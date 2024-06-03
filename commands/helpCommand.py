@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from settings import COMMAND_PREFIX
 
-from variousUtils import getDiscordMainColor
+from utils.variousUtils import getDiscordMainColor
 
 """ 
 I create this helper functions to centralize the help message creation. This are then called from

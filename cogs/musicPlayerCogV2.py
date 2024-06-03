@@ -10,13 +10,168 @@ import subprocess
 import discord
 from discord.ext import tasks, commands
 
-from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
-
 import yt_dlp
 from googleapiclient.discovery import build
 
-from variousUtils import getDiscordMainColor
+from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN, DB_CONNECTION
+from utils.variousUtils import getDiscordMainColor
 
+# this class should not be instantiated from outside the AudioPlaylist items
+class AudioPlaylistItem:
+  def __init__(self):
+    self.row_id = -1
+    self.original_url : str = ""
+    self.title : str = ""
+    self.origin_id : int = 0
+    self.playlist_row_id : int = -1
+  
+  def __init__(self, row_id : int):
+    cursor = DB_CONNECTION.cursor()
+
+    sql = "SELECT * FROM playlist_items WHERE rowId = ?;"
+
+    cursor.execute(sql, [row_id])
+
+    item = cursor.fetchone()
+
+    self.row_id = item[0]
+    self.original_url = item[1]
+    self.title = item[2]
+    self.origin_id = item[3]
+    self.playlist_row_id = item[4]
+
+    cursor.close()
+
+  def load_data(self, data):
+    self.title = data["title"]
+    self.original_url = data["original_url"]
+    self.is_live = data["is_live"]
+    self.thumbnail = data["thumbnail"]
+    self.id = data["id"]
+
+class AudioPlaylist:
+  def __init__(self):
+    self.rowId : int = -1
+    self.name : str = ""
+    self.owner_user_id : int = 0
+
+    self.item_count = 0
+    self.items : list[AudioPlaylistItem] = []
+
+  def __init__(self, index : int, owner_user_id : int):
+    print("constructor 2 called")
+
+    try:
+      # get rowid out of the order by rowid base index
+      cursor =  DB_CONNECTION.cursor()
+
+      sql = "SELECT * FROM playlists WHERE ownerUserId = ? ORDER BY rowId;"
+      
+      cursor.execute(sql, [owner_user_id])
+
+      raw_playlists_rows = cursor.fetchall()
+
+      if (index < 0 or index >= len(raw_playlists_rows)):
+        raise IndexError("the given playlist index value does not exists on the db")
+
+      raw_playlist = raw_playlists_rows[index]
+
+      self.load_data_from_row_id(raw_playlist[0])
+
+    except Exception as e:
+      if DB_CONNECTION.in_transaction:
+        DB_CONNECTION.rollback()
+
+      LOGGER.log(logging.ERROR, f"Exception on playlist_show command:\n{repr(e)}")
+
+    finally:
+      cursor.close()
+
+  def load_data_from_row_id(self, row_id):
+    print("load_data_from_row_id called")
+    # get the playlist info
+    cursor =  DB_CONNECTION.cursor()
+    
+    sql = "SELECT * FROM playlists WHERE rowId = ?"
+
+    cursor.execute(sql, [row_id])
+
+    raw_playlist = cursor.fetchone()
+
+    self.rowId = raw_playlist[0]
+    self.owner_user_id = raw_playlist[1]
+    self.name = raw_playlist[2]
+
+    # get the songs of the playlist
+    sql = "SELECT rowId FROM playlist_items WHERE playlistRowId = ?"
+
+    cursor.execute(sql, [self.rowId])
+
+    raw_playlist_items = cursor.fetchall()
+
+    self.items : list[AudioPlaylistItem] = []
+    self.item_count = 0
+
+    for raw_item in raw_playlist_items:
+      item = AudioPlaylist(raw_item[0])
+
+      self.items.append(item)
+      self.item_count += 1
+
+  def new_item(self) -> AudioPlaylistItem:
+    item : AudioPlaylist = AudioPlaylistItem()
+
+    item.playlist_row_id = self.row_id
+
+    return item
+
+  def add(self, item : AudioPlaylistItem):
+    try:
+      cursor = DB_CONNECTION.cursor()
+
+      sql = "INSERT INTO playlist_items(originalUrl, title, originId, playlistRowId) VALUES(?, ?, ?, ?);"
+
+      cursor.execute(sql, [item.original_url, item.title, item.origin_id, self.rowId])
+
+      DB_CONNECTION.commit()
+
+      self.items.append(item)
+
+      self.item_count += 1
+
+    except:
+      if DB_CONNECTION.in_transaction:
+        DB_CONNECTION.rollback()
+
+    finally:
+      cursor.close()
+
+  def remove(self, index : int) -> AudioPlaylistItem:
+    if (index > len(self.items) - 1):
+      raise IndexError()
+    
+    item = self.items[index]
+
+    try:
+      cursor = DB_CONNECTION.cursor()
+      
+      sql = "DELETE FROM playlist_items WHERE rowid = ?;"
+
+      cursor.execute(sql, [item.row_id])
+
+      DB_CONNECTION.commit()
+
+    except:
+      if DB_CONNECTION.in_transaction:
+        DB_CONNECTION.rollback()
+
+    finally:
+      cursor.close()
+
+    self.items.pop(index)
+    self.item_count -= 1
+
+    return item
 
 class AudioResource:
   def __init__(self):
@@ -86,7 +241,6 @@ class AudioBuffer:
     if AudioBuffer.exists_filename(filename_org):
       AudioBuffer.remove_filename(filename_org)
     
-
   @staticmethod
   def remove_filename(filename : str):
     filepath = os.path.join(AudioBuffer.__buffer_path, filename)
@@ -234,14 +388,14 @@ class AudioStream:
 
     self._stream_task.start()
 
-  def stop_stream(self):
-    if not self._stream_task.is_running():
-      raise Exception("Stream is not running!")
-    
-    self.audio = None
-    self.queue.clear()
+  async def stop_stream(self):
+    await self.voice_channel.disconnect()
 
     self._stream_task.cancel()
+    self.queue.clear()
+    self.audio = None
+    
+    #await self.voice_channel.disconnect()
 
   def pause_stream(self):
     self.voice_channel.pause()
@@ -302,8 +456,7 @@ class AudioStream:
       await asyncio.sleep(5)
       if len(self.voice_channel.channel.members) <= 1:
         LOGGER.log(logging.INFO, f"stoping stream: no member on voice channel")
-        await self.voice_channel.disconnect()
-        self.stop_stream()
+        await self.stop_stream()
         return
     
     if self.is_changing_speed:
@@ -323,8 +476,7 @@ class AudioStream:
 
     if self.queue.count() == 0:
       LOGGER.log(logging.INFO, f"stoping stream: no songs on queue")
-      await self.voice_channel.disconnect()
-      self.stop_stream()
+      await self.stop_stream()
       return
 
     self.audio : AudioResource = self.queue.get(0)
@@ -576,7 +728,7 @@ class MusicPlayer(commands.Cog):
   async def stop(self, ctx : commands.Context):
     audio_stream = AudioStreamsHandler.get_stream(ctx.guild.id, self.bot)
 
-    audio_stream.stop_stream()
+    await audio_stream.stop_stream()
 
     em = discord.Embed(color=getDiscordMainColor())
 
@@ -605,3 +757,154 @@ class MusicPlayer(commands.Cog):
 
     em.description = f"Speed X{speed}"
     await msg.edit(embed=em)
+
+  async def __playlist_show(self, ctx : commands.Context, index = -1):
+    em = discord.Embed(description="", color=getDiscordMainColor())
+
+    try:
+
+      cursor =  DB_CONNECTION.cursor()
+
+      if index == -1:
+        sql = "SELECT name FROM playlists WHERE ownerUserId = ? ORDER BY rowId;"
+
+        cursor.execute(sql, [ctx.author.id])
+
+        rows = cursor.fetchall()
+
+        em.title = f"{ctx.author.display_name} playlists"
+        
+        if len(rows) == 0:
+          em.description = "no playlists yet, crete one with `!playlist create <name>`"
+        
+        else:
+          for i, row in enumerate(rows):
+            em.description += f"\n{i + 1} {row[0]}"
+      
+      else:
+        playlist : AudioPlaylist = AudioPlaylist(index, ctx.author.id)
+
+        em.title = f"{playlist.name} ({playlist.item_count} items)"
+
+        if playlist.item_count == 0:
+          em.description = "no items on the playlist, add one with `!playlist add <playlist_index> <url>`"
+        
+        else:
+          for i, item in enumerate(playlist.items):
+            em.description += f"{i + 1} {item.title}"
+
+      await ctx.send(embed=em)
+
+    except Exception as e:
+      if DB_CONNECTION.in_transaction:
+        DB_CONNECTION.rollback()
+      
+      LOGGER.log(logging.ERROR, f"Exception on playlist_show command:\n{repr(e)}")
+
+    finally:
+      cursor.close()
+
+  @commands.hybrid_group()
+  async def playlist(self, ctx, index : int = -1):
+    return await self.__playlist_show(ctx, index)
+
+  @playlist.command(name="show", brief="", description="")
+  async def playlist_show(self, ctx : commands.Context, index : int = -1):
+    return await self.__playlist_show(ctx, index)
+  
+  @playlist.command(name="create", brief="", description="")
+  async def playlist_create(self, ctx : commands.Context, name : str):
+    try:
+      cursor =  DB_CONNECTION.cursor()
+
+      sql = "INSERT INTO playlists(name, ownerUserId) VALUES (?, ?);"
+
+      cursor.execute(sql, [name, ctx.author.id])
+
+      DB_CONNECTION.commit()
+
+      em = discord.Embed(color=getDiscordMainColor())
+
+      em.description = f"playlist **\"{name}\"** created"
+
+      await ctx.send(embed=em)
+
+    except:
+      if DB_CONNECTION.in_transaction:
+        DB_CONNECTION.rollback()
+      
+      LOGGER.log(logging.ERROR, f"Exception on playlist_create command:\n{repr(e)}")
+
+    finally:
+      cursor.close()
+
+  playlist.command()
+  async def playlist_add(self, ctx : commands.Context, index : int, url : str):
+    em = discord.Embed(color=getDiscordMainColor())
+
+    try:
+      cursor =  DB_CONNECTION.cursor()
+
+      # get the playlist
+      try:
+        playlist = AudioPlaylist(index, ctx.author.id)
+      except IndexError as e: 
+        em.description = "Invalid index"
+        return await ctx.send(embed=em)
+      
+      # check the url resource
+      ytdlopts = {
+        'format': 'bestaudio/best',
+        'restrictfilenames': True,
+        'noplaylist': True,
+        'nocheckcertificate': True,
+        'ignoreerrors': False,
+        'logtostderr': False,
+        'quiet': True,
+        "external_downloader_args": ['-loglevel', 'panic'],
+        'no_warnings': True,
+        'default_search': 'auto',
+        'source_address': '0.0.0.0'  # ipv6 addresses cause issues sometimes
+      }
+
+      ytdl = yt_dlp.YoutubeDL(ytdlopts)
+      data = ytdl.extract_info(url=url, download=False)
+
+      # add the item to playlist
+      item : AudioPlaylistItem = playlist.new_item()
+
+      item.load_data(data)
+
+      playlist.add(item)
+
+      em.description = f"[{item.title}]({item.original_url}) added to playlist {playlist[1]}"
+
+      await ctx.send(embed=em)
+
+    except:
+      if DB_CONNECTION.in_transaction:
+        DB_CONNECTION.rollback()
+      
+      LOGGER.log(logging.ERROR, f"Exception on playlist_create command:\n{repr(e)}")
+
+    finally:
+      cursor.close()
+
+  playlist.command()
+  async def playlist_remove(self, ctx : commands.Context, playlist_index : int, item_index : int):
+    em = discord.Embed(color=getDiscordMainColor())
+
+    try:
+      playlist : AudioPlaylist = AudioPlaylist(playlist_index, ctx.author.id)
+    except IndexError:
+      em.description = "Invalid playlist index"
+      return await ctx.send(embed=em)
+    
+    try:
+      item : AudioPlaylistItem = playlist.remove(item_index)
+    except IndexError:
+      em.description = "Invalid item index"
+      return await ctx.send(embed=em)
+    
+    em.description = f"{item.title} removed from {playlist.name} playlist"
+    return await ctx.send(embed=em)
