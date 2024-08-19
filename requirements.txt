@@ -16,3 +16,5 @@ gitpython
 selenium
 nltk
 regex
+
+pandas

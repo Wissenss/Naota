@@ -922,11 +922,12 @@ class MusicPlayer(commands.Cog):
     comments_list = process_youtube_comments(youtube_url, [category])
 
     if not comments_list.empty:
-      comment = comments_list[0]
+      comment = comments_list.comments
       
-      print(comment)
+      for comment in comments_list.comments:
+        print(comment)
 
-      em.description += comment
+        em.description += comment
 
     else:
       em.description = f"no youtube comment that is positive about <{category}>"
