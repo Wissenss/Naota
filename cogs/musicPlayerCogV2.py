@@ -3,6 +3,7 @@ import logging
 import time
 import datetime
 import asyncio
+from typing import List
 import uuid
 import random
 import subprocess
@@ -15,6 +16,8 @@ from googleapiclient.discovery import build
 
 from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN, DB_CONNECTION
 from utils.variousUtils import getDiscordMainColor
+
+from sentiment.sentiment_analysis import process_youtube_comments
 
 # this class should not be instantiated from outside the AudioPlaylist items
 class AudioPlaylistItem:
@@ -908,3 +911,33 @@ class MusicPlayer(commands.Cog):
     
     em.description = f"{item.title} removed from {playlist.name} playlist"
     return await ctx.send(embed=em)
+
+  async def __comment_get(self, ctx : commands.Context, youtube_url : str, category : str):
+    em = discord.Embed(title="", description="", color=getDiscordMainColor())
+
+    em.description = f"Quering [resource]({youtube_url})"
+
+    msg : discord.Message = await ctx.send(embed=em)
+
+    comments_list = process_youtube_comments(youtube_url, [category])
+
+    if not comments_list.empty:
+      comment = comments_list.comments
+      
+      for comment in comments_list.comments:
+        print(comment)
+
+        em.description += comment
+
+    else:
+      em.description = f"no youtube comment that is positive about <{category}>"
+
+    await msg.edit(embed=em)
+
+  @commands.hybrid_group()
+  async def comment(self, ctx, youtube_url : str, category : str):
+    return await self.__comment_get(ctx, youtube_url, category)
+  
+  @comment.command(name="get", brief="", description="")
+  async def comment_get(self, ctx, youtube_url : str, category : str):
+    return await self.__comment_get(ctx, youtube_url, category)
