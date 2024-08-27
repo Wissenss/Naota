@@ -6,6 +6,11 @@ __pycache__/
 /buffer
 /release
 /bin
+/lib
+lib64
+/share
+
+pyvenv.cfg
 
 bugs.txt
 discordPermisions.txt
