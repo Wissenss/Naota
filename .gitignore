@@ -9,5 +9,6 @@ __pycache__/
 bugs.txt
 discordPermisions.txt
 naota.log
+permissions.json
 
 *.db

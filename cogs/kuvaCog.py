@@ -4,6 +4,8 @@ from discord.ext import commands
 
 import logging
 
+from utils import permissionsUtils 
+
 from settings import KUVA_GUILD_ID, DEV_GUILD_ID, DB_CONNECTION, DB_FILE_PATH, LOGGER
 
 class KuvaCog(commands.Cog):
@@ -16,8 +18,14 @@ class KuvaCog(commands.Cog):
     self.list_storage_file = "./kuva_movies.txt"
 
   async def cog_check(self, ctx):
-    return ctx.guild.id in (KUVA_GUILD_ID, DEV_GUILD_ID) # this commands are only available for the kuva server
+    result = True
+    
+    result = result and ctx.guild.id in (KUVA_GUILD_ID, DEV_GUILD_ID) # this commands are only available for the kuva server
   
+    result = result and permissionsUtils.cog_allowed_in_context(ctx, self)
+  
+    return result
+
   async def cog_before_invoke(self, ctx: commands.Context):
     LOGGER.log(logging.INFO, f"{ctx.command.name} called by {ctx.author.display_name} (USER ID: {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
     self.cursor = self.connection.cursor()

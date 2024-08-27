@@ -6,17 +6,21 @@ from discord.ext import commands
 from settings import COMMAND_PREFIX
 
 from utils.variousUtils import getDiscordMainColor
+from utils import permissionsUtils
 
 """ 
 I create this helper functions to centralize the help message creation. This are then called from
 both the CustomHelpCommand class and the CustomHelpSlashCommand. Not too elegent but good enough for now  
 """
 
-def get_help_embed(mapping):
+def get_help_embed(ctx : commands.Context, mapping):
   desciption_ = ""
   for cog, cmds in mapping.items():
     
     if cog:
+      if not permissionsUtils.cog_allowed_in_context(ctx, cog):
+        continue
+
       desciption_ += f"\n\n__**{cog.qualified_name}**__"
     else:
       desciption_ += "\n\n__**No Category**__"
@@ -68,7 +72,10 @@ def get_group_help_embed(group : commands.Group):
 
   return em
 
-def get_cog_help_embed(cog : commands.Cog):
+def get_cog_help_embed(cog : commands.Cog, ctx : commands.Context):
+  if not permissionsUtils.cog_allowed_in_context(ctx, cog):
+    return discord.Embed(title=f"", description=f"{cog.__cog_name__} not allowed")
+ 
   description_ = f"{cog.description}"
 
   description_ += "\n\n __**Commands**__"
@@ -90,7 +97,7 @@ class CustomHelpCommand(commands.HelpCommand):
     self.command_attrs["description"] += f"\n\nType `{COMMAND_PREFIX}help command_name` for more info on a command. You can also type `{COMMAND_PREFIX}help category_name` for more info on a category"
 
   async def send_bot_help(self, mapping):
-    em = get_help_embed(mapping)
+    em = get_help_embed(self.context, mapping)
 
     channel = self.get_destination()
     await channel.send(embed=em)

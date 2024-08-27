@@ -6,6 +6,7 @@ import logging
 
 from settings import CHEMS_GUILD_ID, DEV_GUILD_ID, DB_CONNECTION, DB_FILE_PATH, LOGGER
 from utils.variousUtils import getDiscordMainColor
+from utils import permissionsUtils
 
 class ChemsCog(commands.Cog):
   """ Butthole Lovers Commands """
@@ -14,11 +15,17 @@ class ChemsCog(commands.Cog):
     self.bot = bot
     self.storage_file = "cords.txt"
 
-  async def cog_check(self, ctx):
-    return ctx.guild.id in (CHEMS_GUILD_ID, DEV_GUILD_ID) # this commands are only available for the butthole lovers server
-
   async def cog_before_invoke(self, ctx: commands.Context):
     LOGGER.log(logging.INFO, f"{ctx.command.name} called by {ctx.author.display_name} (USER ID: {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
+
+  async def cog_check(self, ctx):
+    result = True
+    
+    result = result and ctx.guild.id in (CHEMS_GUILD_ID, DEV_GUILD_ID) # this commands are only available for the butthole lovers server
+  
+    result = result and permissionsUtils.cog_allowed_in_context(ctx, self)
+  
+    return result
 
   async def __cords_show(self, ctx : commands.Context):
     em = discord.Embed(title="The Cords", description="", color=getDiscordMainColor())

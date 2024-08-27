@@ -16,6 +16,7 @@ from googleapiclient.discovery import build
 
 from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN, DB_CONNECTION
 from utils.variousUtils import getDiscordMainColor
+from utils import permissionsUtils
 
 from sentiment.sentiment_analysis import process_youtube_comments
 
@@ -516,6 +517,9 @@ class MusicPlayer(commands.Cog):
 
   async def cog_before_invoke(self, ctx : commands.Context):
     LOGGER.log(logging.INFO, f"{ctx.command.name} called (USER ID: {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
+
+  async def cog_check(self, ctx):
+    return permissionsUtils.cog_allowed_in_context(ctx, self)
 
   async def cog_after_invoke(self, ctx: commands.Context):
     pass

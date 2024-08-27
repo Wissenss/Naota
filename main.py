@@ -107,7 +107,7 @@ async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : s
 		mapping: Dict[Optional[commands.Cog], List[commands.Command[Any, ..., Any]]] = {cog: cog.get_commands() for cog in bot.cogs.values()}
 		mapping[None] = [c for c in bot.commands if c.cog is None]
 
-		em = get_help_embed(mapping)
+		em = get_help_embed(interaction.context, mapping)
 		await interaction.response.send_message(embed=em)
 		return
 
