@@ -5,10 +5,12 @@ __pycache__/
 
 /buffer
 /release
+/bin
 
 bugs.txt
 discordPermisions.txt
 naota.log
 permissions.json
+default.txt
 
 *.db
