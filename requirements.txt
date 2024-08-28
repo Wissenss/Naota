@@ -15,3 +15,5 @@ selenium
 nltk
 regex
 pandas
+
+db-sqlite3

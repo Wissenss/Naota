@@ -6,7 +6,7 @@ import logging
 
 from utils import permissionsUtils 
 
-from settings import KUVA_GUILD_ID, DEV_GUILD_ID, DB_CONNECTION, DB_FILE_PATH, LOGGER
+from settings import KUVA_GUILD_ID, DEV_GUILD_ID, DB_FILE_PATH, LOGGER
 
 class KuvaCog(commands.Cog):
   """ Kuva Clan Commands """

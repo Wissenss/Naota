@@ -4,7 +4,7 @@ from discord.ext import commands
 
 import logging
 
-from settings import CHEMS_GUILD_ID, DEV_GUILD_ID, DB_CONNECTION, DB_FILE_PATH, LOGGER
+from settings import CHEMS_GUILD_ID, DEV_GUILD_ID, DB_FILE_PATH, LOGGER
 from utils.variousUtils import getDiscordMainColor
 from utils import permissionsUtils
 

@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Optional
 import discord
 from discord.ext import commands
 
+import connection
+
 import time
 import os
 import logging
@@ -19,6 +21,7 @@ from utils.variousUtils import getDiscordMainColor
 from cogs.musicPlayerCogV2 import MusicPlayer
 from cogs.kuvaCog import KuvaCog 
 from cogs.chemsCog import ChemsCog
+from cogs.watchlistCog import WatchlistCog
 ##############################
 
 from commands.helpCommand import *
@@ -42,6 +45,7 @@ async def setup_hook():
 	await bot.add_cog(MusicPlayer(bot))
 	# await bot.add_cog(KuvaCog(bot))
 	await bot.add_cog(ChemsCog(bot))
+	await bot.add_cog(WatchlistCog(bot))
 	
 	LOGGER.log(logging.INFO, "loading other commands...")
 	bot.add_command(ping)
@@ -49,6 +53,9 @@ async def setup_hook():
 	bot.add_command(sync)
 
 	bot.help_command = CustomHelpCommand()
+
+	LOGGER.log(logging.INFO, "starting connection pool...")
+	connection.init_connection_pool()
 
 	LOGGER.log(logging.INFO, "all set up!")
 	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")

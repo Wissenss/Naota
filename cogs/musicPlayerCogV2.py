@@ -14,7 +14,7 @@ from discord.ext import tasks, commands
 import yt_dlp
 from googleapiclient.discovery import build
 
-from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN, DB_CONNECTION
+from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
 from utils.variousUtils import getDiscordMainColor
 from utils import permissionsUtils
 

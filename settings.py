@@ -29,4 +29,3 @@ CHEMS_GUILD_ID = 821940114648334416
 
 # connection string
 DB_FILE_PATH = os.getenv("DB_FILE_PATH")
-DB_CONNECTION : sqlite3.Connection = sqlite3.connect(DB_FILE_PATH)
