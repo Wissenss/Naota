@@ -98,7 +98,7 @@ class WatchlistCog(commands.Cog):
 
       for i, item in enumerate(curs.fetchall()):
         status_str = self.__watchlist_item_status_to_tag(item[4])
-        em.description += f"{item[0]}. {item[2]} ({item[7]}/{item[5]}) ({status_str})" 
+        em.description += f"\n{item[0]}. {item[2]} ({item[7]}/{item[5]}) ({status_str})" 
 
     except Exception as e:
       em.title = ""
@@ -120,9 +120,11 @@ class WatchlistCog(commands.Cog):
       conn = connection.get_connection()
       curs = conn.cursor()
 
-      params = [WATCHLIST_ITEM_STATUS_WATCHING]
+      watchlistId = await self.__get_default_watchlist(ctx)
 
-      curs.execute("SELECT * FROM watchlist_items WHERE status = ? LIMIT 1", params)
+      params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlistId]
+
+      curs.execute("SELECT * FROM watchlist_items WHERE status = ? AND watchlist_id = ? LIMIT 1", params)
 
       record = curs.fetchone() 
 
@@ -161,6 +163,36 @@ class WatchlistCog(commands.Cog):
       conn.commit()
 
       await self.watching(ctx)
+
+    except Exception as e:
+      em.title = ""
+      em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
+      em.color = discord.Color.red()
+
+      LOGGER.log(logging.ERROR, em.description)
+    
+      await ctx.send(embed=em)
+
+    finally:
+      connection.release_connection(conn)
+
+  @commands.hybrid_command()
+  async def watchlist_add(self, ctx : commands.Context, title : str, episodes : int, duration : int):
+    em = discord.Embed()
+
+    try:
+      conn = connection.get_connection()
+      curs = conn.cursor()
+
+      watchlist_id = await self.__get_default_watchlist(ctx)
+
+      params = [watchlist_id, title, ctx.guild.id, WATCHLIST_ITEM_STATUS_WATCHING, episodes, duration, 0]
+
+      curs.execute("INSERT INTO watchlist_items(watchlist_id, name, author_id, status, total_episodes, episode_duration, current_episode) VALUES (?, ?, ?, ?, ?, ?, ?)", params)
+
+      conn.commit()
+
+      await self.watchlist_show(ctx)
 
     except Exception as e:
       em.title = ""
