@@ -18,6 +18,8 @@ from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
 from utils.variousUtils import getDiscordMainColor
 from utils import permissionsUtils
 
+import connection
+
 from sentiment.sentiment_analysis import process_youtube_comments
 
 # this class should not be instantiated from outside the AudioPlaylist items
@@ -30,7 +32,8 @@ class AudioPlaylistItem:
     self.playlist_row_id : int = -1
   
   def __init__(self, row_id : int):
-    cursor = DB_CONNECTION.cursor()
+    conn = connection.get_connection()
+    cursor = conn.cursor()
 
     sql = "SELECT * FROM playlist_items WHERE rowId = ?;"
 
@@ -67,7 +70,8 @@ class AudioPlaylist:
 
     try:
       # get rowid out of the order by rowid base index
-      cursor =  DB_CONNECTION.cursor()
+      conn = connection.get_connection()
+      cursor = conn.cursor()
 
       sql = "SELECT * FROM playlists WHERE ownerUserId = ? ORDER BY rowId;"
       
@@ -83,18 +87,19 @@ class AudioPlaylist:
       self.load_data_from_row_id(raw_playlist[0])
 
     except Exception as e:
-      if DB_CONNECTION.in_transaction:
-        DB_CONNECTION.rollback()
+      if conn.in_transaction:
+        conn.rollback()
 
       LOGGER.log(logging.ERROR, f"Exception on playlist_show command:\n{repr(e)}")
 
     finally:
-      cursor.close()
+      connection.release_connection(conn)
 
   def load_data_from_row_id(self, row_id):
     print("load_data_from_row_id called")
     # get the playlist info
-    cursor =  DB_CONNECTION.cursor()
+    conn = connection.get_connection()
+    cursor =  conn.cursor()
     
     sql = "SELECT * FROM playlists WHERE rowId = ?"
 
@@ -131,24 +136,25 @@ class AudioPlaylist:
 
   def add(self, item : AudioPlaylistItem):
     try:
-      cursor = DB_CONNECTION.cursor()
+      conn = connection.get_connection()
+      cursor = conn.cursor()
 
       sql = "INSERT INTO playlist_items(originalUrl, title, originId, playlistRowId) VALUES(?, ?, ?, ?);"
 
       cursor.execute(sql, [item.original_url, item.title, item.origin_id, self.rowId])
 
-      DB_CONNECTION.commit()
+      conn.commit()
 
       self.items.append(item)
 
       self.item_count += 1
 
     except:
-      if DB_CONNECTION.in_transaction:
-        DB_CONNECTION.rollback()
+      if conn.in_transaction:
+        conn.rollback()
 
     finally:
-      cursor.close()
+      connection.release_connection(conn)
 
   def remove(self, index : int) -> AudioPlaylistItem:
     if (index > len(self.items) - 1):
@@ -157,20 +163,21 @@ class AudioPlaylist:
     item = self.items[index]
 
     try:
-      cursor = DB_CONNECTION.cursor()
+      conn = connection.get_connection()
+      cursor = conn.cursor()
       
       sql = "DELETE FROM playlist_items WHERE rowid = ?;"
 
       cursor.execute(sql, [item.row_id])
 
-      DB_CONNECTION.commit()
+      conn.commit()
 
     except:
-      if DB_CONNECTION.in_transaction:
-        DB_CONNECTION.rollback()
+      if conn.in_transaction:
+        conn.rollback()
 
     finally:
-      cursor.close()
+      connection.release_connection(conn)
 
     self.items.pop(index)
     self.item_count -= 1
@@ -769,8 +776,8 @@ class MusicPlayer(commands.Cog):
     em = discord.Embed(description="", color=getDiscordMainColor())
 
     try:
-
-      cursor =  DB_CONNECTION.cursor()
+      conn = connection.get_connection()
+      cursor =  conn.cursor()
 
       if index == -1:
         sql = "SELECT name FROM playlists WHERE ownerUserId = ? ORDER BY rowId;"
@@ -803,13 +810,13 @@ class MusicPlayer(commands.Cog):
       await ctx.send(embed=em)
 
     except Exception as e:
-      if DB_CONNECTION.in_transaction:
-        DB_CONNECTION.rollback()
+      if conn.in_transaction:
+        conn.rollback()
       
       LOGGER.log(logging.ERROR, f"Exception on playlist_show command:\n{repr(e)}")
 
     finally:
-      cursor.close()
+      connection.release_connection(conn)
 
   @commands.hybrid_group()
   async def playlist(self, ctx, index : int = -1):
@@ -822,13 +829,14 @@ class MusicPlayer(commands.Cog):
   @playlist.command(name="create", brief="", description="")
   async def playlist_create(self, ctx : commands.Context, name : str):
     try:
-      cursor =  DB_CONNECTION.cursor()
+      conn = connection.get_connection()
+      cursor = conn.cursor()
 
       sql = "INSERT INTO playlists(name, ownerUserId) VALUES (?, ?);"
 
       cursor.execute(sql, [name, ctx.author.id])
 
-      DB_CONNECTION.commit()
+      conn.commit()
 
       em = discord.Embed(color=getDiscordMainColor())
 
@@ -836,21 +844,22 @@ class MusicPlayer(commands.Cog):
 
       await ctx.send(embed=em)
 
-    except:
-      if DB_CONNECTION.in_transaction:
-        DB_CONNECTION.rollback()
+    except Exception as e:
+      if conn.in_transaction:
+        conn.rollback()
       
       LOGGER.log(logging.ERROR, f"Exception on playlist_create command:\n{repr(e)}")
 
     finally:
-      cursor.close()
+      connection.release_connection(conn)
 
   playlist.command()
   async def playlist_add(self, ctx : commands.Context, index : int, url : str):
     em = discord.Embed(color=getDiscordMainColor())
 
     try:
-      cursor =  DB_CONNECTION.cursor()
+      conn = connection.get_connection()
+      cursor =  conn.cursor()
 
       # get the playlist
       try:
@@ -889,13 +898,13 @@ class MusicPlayer(commands.Cog):
       await ctx.send(embed=em)
 
     except:
-      if DB_CONNECTION.in_transaction:
-        DB_CONNECTION.rollback()
+      if conn.in_transaction:
+        conn.rollback()
       
       LOGGER.log(logging.ERROR, f"Exception on playlist_create command:\n{repr(e)}")
 
     finally:
-      cursor.close()
+      connection.release_connection(conn)
 
   playlist.command()
   async def playlist_remove(self, ctx : commands.Context, playlist_index : int, item_index : int):

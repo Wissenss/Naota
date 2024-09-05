@@ -131,7 +131,7 @@ class WatchlistCog(commands.Cog):
       if record:
         em.title = record[2]
 
-        em.description += f"\ncompleted: ({record[7]}/{record[5]})"
+        em.description += f"\ncompleted: {(record[7]/record[5]):.0%} ({record[7]}/{record[5]})"
         em.description += f"\nremaining watchtime: {record[6] * (record[5] - record[7])}min"
 
     except Exception as e:
