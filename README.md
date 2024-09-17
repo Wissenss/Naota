@@ -1,16 +1,15 @@
 # Naota
-I'm a bot trying to be useful. Hope I'm not too buggy!
+The Naota project is developed for academic popuses only. We do not hold ourselves responsable for the improper use of this code base. Please review the [Discord Developer Policy](https://discord.com/developers/docs/policies-and-agreements/developer-policy) and [Youtube API Terms of Service](https://developers.google.com/youtube/terms/api-services-terms-of-service) before moving forward.
+
+> _"I'm a bot trying to be useful. Hope I'm not too buggy!"_ ~ Naota 2021 
 
 This code base can run on Windows and Linux with proper [setup](#setup).
 
 # Features and usage
-Naota has the following "Cogs":
+Naota has the following Cogs:
 
 1. MusicPlayer: commands to stream youtube music.
 2. Watchlist: commands to keep track of series or movies.
-
-## Disclaimer
-The Naota project is developed for academic popuses only. We do not hold ourselves responsable for the improper use of this code base. Please review the [Discord Developer Policy](https://discord.com/developers/docs/policies-and-agreements/developer-policy) and [Youtube API Terms of Service](https://developers.google.com/youtube/terms/api-services-terms-of-service) before moving forward.
 
 ## For developers
 Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable/) and [YouTube Data API](https://developers.google.com/youtube/v3).
