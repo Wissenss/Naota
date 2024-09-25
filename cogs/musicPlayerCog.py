@@ -18,7 +18,7 @@ from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
 from utils.variousUtils import getDiscordMainColor
 from utils import permissionsUtils
 
-import connection
+import connectionPool as connection
 
 from sentiment.sentiment_analysis import process_youtube_comments
 

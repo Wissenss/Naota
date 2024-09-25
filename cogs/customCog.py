@@ -33,4 +33,6 @@ class CustomCog(commands.Cog):
         em.description = f"permission denied for cog **{self.__cog_name__}**"
 
         return await ctx.send(embed=em)
-        
+    
+    async def on_exception(self, ctx : commands.Context, e : Exception):
+        return await ctx.send()

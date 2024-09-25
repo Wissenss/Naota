@@ -2,8 +2,9 @@ import sqlite3
 import logging
 from settings import *
 from utils.variousUtils import getDiscordMainColor
-import connection
+import connectionPool
 import discord
+from discord import app_commands
 from discord.ext import commands
 from utils import permissionsUtils
 
@@ -13,8 +14,15 @@ WATCHLIST_ITEM_STATUS_ON_HOLD = 2
 WATCHLIST_ITEM_STATUS_COMPLETED = 3,
 WATCHLIST_ITEM_STATUS_DROPPED = 4
 
+class WatchlistModal(discord.ui.Modal, title="Watchlist"):
+  label_name = discord.ui.TextInput(label="Name", style=discord.TextStyle.short, placeholder="\"nicho\" playlist")
+
+
 class WatchlistCog(commands.Cog):
-  "Watchlist functions"
+  "Keep track of movies and shows"
+
+  watchlist_group = app_commands.Group(name="watchlist", description="operations for watchlists")
+  watchitem_group = app_commands.Group(name="watchitme", description="operations for items inside watchlists")
 
   def __init__(self, bot : commands.Bot):
     self.bot = bot
@@ -102,130 +110,210 @@ class WatchlistCog(commands.Cog):
 
     return 0
 
-  @commands.hybrid_command()
-  async def watchlist_show(self, ctx : commands.Context, watchlist_id : int = 0):
-    em = discord.Embed(title="Watchlist", description="", color=getDiscordMainColor())
+  # @commands.hybrid_command()
+  # async def watchlist_show(self, ctx : commands.Context, watchlist_id : int = 0):
+  #   em = discord.Embed(title="Watchlist", description="", color=getDiscordMainColor())
 
-    try:      
-      if watchlist_id == 0:
-        LOGGER.log(logging.DEBUG, "No watchlist specified, assuming default")
-        watchlist_id = await self.__get_default_watchlist(ctx)
-        LOGGER.log(logging.DEBUG, f"default watchlis_id: {watchlist_id}")
+  #   try:      
+  #     if watchlist_id == 0:
+  #       LOGGER.log(logging.DEBUG, "No watchlist specified, assuming default")
+  #       watchlist_id = await self.__get_default_watchlist(ctx)
+  #       LOGGER.log(logging.DEBUG, f"default watchlis_id: {watchlist_id}")
 
-      conn = connection.get_connection()
+  #     conn = connection.get_connection()
 
-      curs = conn.execute("SELECT * FROM watchlist_items WHERE watchlist_id = ?;", [watchlist_id])
+  #     curs = conn.execute("SELECT * FROM watchlist_items WHERE watchlist_id = ?;", [watchlist_id])
 
-      em.description = ""
+  #     em.description = ""
 
-      for i, item in enumerate(curs.fetchall()):
-        status_str = self.__watchlist_item_status_to_tag(item[4])
-        em.description += f"\n{item[0]}. {item[2]} ({item[7]}/{item[5]}) ({status_str})" 
+  #     for i, item in enumerate(curs.fetchall()):
+  #       status_str = self.__watchlist_item_status_to_tag(item[4])
+  #       em.description += f"\n{item[0]}. {item[2]} ({item[7]}/{item[5]}) ({status_str})" 
 
-    except Exception as e:
-      em.title = ""
-      em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
-      em.color = discord.Color.red()
+  #   except Exception as e:
+  #     em.title = ""
+  #     em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
+  #     em.color = discord.Color.red()
 
-      LOGGER.log(logging.ERROR, em.description)
+  #     LOGGER.log(logging.ERROR, em.description)
 
-    finally:
-      connection.release_connection(conn)
+  #   finally:
+  #     connection.release_connection(conn)
 
-    await ctx.send(embed=em)
+  #   await ctx.send(embed=em)
 
-  @commands.hybrid_command()
-  async def watching(self, ctx : commands.Context):
+  # @commands.hybrid_command()
+  # async def watching(self, ctx : commands.Context):
+  #   em = discord.Embed(title="", description="", color=getDiscordMainColor())
+
+  #   try:
+  #     conn = connection.get_connection()
+  #     curs = conn.cursor()
+
+  #     watchlistId = await self.__get_default_watchlist(ctx)
+
+  #     params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlistId]
+
+  #     curs.execute("SELECT * FROM watchlist_items WHERE status = ? AND watchlist_id = ? LIMIT 1", params)
+
+  #     record = curs.fetchone() 
+
+  #     if record:
+  #       em.title = record[2]
+
+  #       em.description += f"\ncompleted: {(record[7]/record[5]):.0%} ({record[7]}/{record[5]})"
+  #       em.description += f"\nremaining watchtime: {record[6] * (record[5] - record[7])}min"
+
+  #   except Exception as e:
+  #     em.title = ""
+  #     em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
+  #     em.color = discord.Color.red()
+
+  #     LOGGER.log(logging.ERROR, em.description)
+
+  #   finally:
+  #     connection.release_connection(conn)
+
+  #   await ctx.send(embed=em)
+
+  # @commands.hybrid_command()
+  # async def watched(self, ctx : commands.Context):
+  #   em = discord.Embed()
+    
+  #   try:
+  #     conn = connection.get_connection()
+  #     curs = conn.cursor()
+
+  #     watchlist_id = await self.__get_default_watchlist(ctx)
+
+  #     params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlist_id]
+
+  #     curs.execute("UPDATE watchlist_items SET current_episode = current_episode + 1 WHERE status = ? AND watchlist_id = ?", params)
+
+  #     curs.execute("SELECT * from watchlist_items WHERE status = ? and watchlist_id")
+
+  #     conn.commit()
+
+  #     await self.watching(ctx)
+
+  #   except Exception as e:
+  #     em.title = ""
+  #     em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
+  #     em.color = discord.Color.red()
+
+  #     LOGGER.log(logging.ERROR, em.description)
+    
+  #     await ctx.send(embed=em)
+
+  #   finally:
+  #     connection.release_connection(conn)
+
+  # @commands.hybrid_command()
+  # async def watchlist_add(self, ctx : commands.Context, title : str, episodes : int, duration : int):
+  #   em = discord.Embed()
+
+  #   try:
+  #     conn = connection.get_connection()
+  #     curs = conn.cursor()
+
+  #     watchlist_id = await self.__get_default_watchlist(ctx)
+
+  #     params = [watchlist_id, title, ctx.guild.id, WATCHLIST_ITEM_STATUS_WATCHING, episodes, duration, 0]
+
+  #     curs.execute("INSERT INTO watchlist_items(watchlist_id, name, author_id, status, total_episodes, episode_duration, current_episode) VALUES (?, ?, ?, ?, ?, ?, ?)", params)
+
+  #     conn.commit()
+
+  #     await self.watchlist_show(ctx)
+
+  #   except Exception as e:
+  #     em.title = ""
+  #     em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
+  #     em.color = discord.Color.red()
+
+  #     LOGGER.log(logging.ERROR, em.description)
+    
+  #     await ctx.send(embed=em)
+
+  #   finally:
+  #     connection.release_connection(conn)
+
+  # WATCHLISTS
+
+  @watchlist_group.command(name="show", description="show all items inside the watchlist")
+  async def watchlist_show(self, interaction : discord.Interaction, watchlist_id : int):
     em = discord.Embed(title="", description="", color=getDiscordMainColor())
 
-    try:
-      conn = connection.get_connection()
-      curs = conn.cursor()
+    conn = connectionPool.get_connection()
+    curs = conn.cursor()
 
-      watchlistId = await self.__get_default_watchlist(ctx)
+    curs.execute("SELECT * FROM watchlists WHERE watchlist_id = ?", [watchlist_id])
+    row_data = curs.fetchone()
 
-      params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlistId]
-
-      curs.execute("SELECT * FROM watchlist_items WHERE status = ? AND watchlist_id = ? LIMIT 1", params)
-
-      record = curs.fetchone() 
-
-      if record:
-        em.title = record[2]
-
-        em.description += f"\ncompleted: {(record[7]/record[5]):.0%} ({record[7]}/{record[5]})"
-        em.description += f"\nremaining watchtime: {record[6] * (record[5] - record[7])}min"
-
-    except Exception as e:
-      em.title = ""
-      em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
-      em.color = discord.Color.red()
-
-      LOGGER.log(logging.ERROR, em.description)
-
-    finally:
-      connection.release_connection(conn)
-
-    await ctx.send(embed=em)
-
-  @commands.hybrid_command()
-  async def watched(self, ctx : commands.Context):
-    em = discord.Embed()
+    watchlist_name = row_data[1]
     
-    try:
-      conn = connection.get_connection()
-      curs = conn.cursor()
+    em.title = f"Watchlist #{watchlist_id}: {watchlist_name}"
 
-      watchlist_id = await self.__get_default_watchlist(ctx)
+    curs.execute("SELECT * FROM watchlist_items WHERE watchlist_id = ? ORDER BY watchlist_item_id DESC;", [watchlist_id])
+    rows_list = curs.fetchall()
 
-      params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlist_id]
+    for row in rows_list:
+      watchlist_item_id = row[0]
+      watchlist_id = row[1]
+      name = row[2]
+      author_id = row[3]
 
-      curs.execute("UPDATE watchlist_items SET current_episode = current_episode + 1 WHERE status = ? AND watchlist_id = ?", params)
+      em.description += f"\n{watchlist_item_id} - {name}"
 
-      curs.execute("SELECT * from watchlist_items WHERE status = ? and watchlist_id")
+    connectionPool.release_connection(conn)
 
-      conn.commit()
+  @watchlist_group.command(name="list", description="show a list of all existing watchlists for current server")
+  async def watchlist_list(self, interaction : discord.Interaction):
+    em = discord.Embed(title="Watchlists", description="", color=getDiscordMainColor())
 
-      await self.watching(ctx)
-
-    except Exception as e:
-      em.title = ""
-      em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
-      em.color = discord.Color.red()
-
-      LOGGER.log(logging.ERROR, em.description)
-    
-      await ctx.send(embed=em)
-
-    finally:
-      connection.release_connection(conn)
-
-  @commands.hybrid_command()
-  async def watchlist_add(self, ctx : commands.Context, title : str, episodes : int, duration : int):
-    em = discord.Embed()
+    conn = connectionPool.get_connection()
 
     try:
-      conn = connection.get_connection()
       curs = conn.cursor()
+      curs.execute("SELECT * FROM watchlists WHERE guild_id = ?;", [interaction.guild_id])
+      rows_list = curs.fetchall()
 
-      watchlist_id = await self.__get_default_watchlist(ctx)
+      for row in rows_list:
+        watchlist_id = row[0]
+        name = row[1]
 
-      params = [watchlist_id, title, ctx.guild.id, WATCHLIST_ITEM_STATUS_WATCHING, episodes, duration, 0]
-
-      curs.execute("INSERT INTO watchlist_items(watchlist_id, name, author_id, status, total_episodes, episode_duration, current_episode) VALUES (?, ?, ?, ?, ?, ?, ?)", params)
-
-      conn.commit()
-
-      await self.watchlist_show(ctx)
-
-    except Exception as e:
-      em.title = ""
-      em.description = f"unhandled exception on {ctx.command.name}: {repr(e)}"
-      em.color = discord.Color.red()
-
-      LOGGER.log(logging.ERROR, em.description)
+        em.description += f"\n{watchlist_id} - {name}"
     
-      await ctx.send(embed=em)
-
+      interaction.response.send_message(embed=em)
+    
+    except Exception as e:
+      pass
+    
     finally:
-      connection.release_connection(conn)
+      connectionPool.release_connection(conn)
+
+  @watchlist_group.command(name="add", description="create a new watchlist")
+  async def watchlist_add(self, interaction : discord.Interaction):
+    pass
+  
+  @watchlist_group.command(name="edit", description="edita a watchlist")
+  async def watchlist_edit(self, interaction : discord.Interaction):
+    pass
+
+  # WATCHLIST ITEMS 
+
+  @watchitem_group.command(name="show", description="show details for the give watchlist item")
+  async def watchitem_show(self, interaction : discord.Interaction):
+    pass
+
+  @watchitem_group.command(name="watched", description="increments watch count by one")
+  async def watchitem_watched(self, interaction : discord.Interaction, watchitem_id : int):
+    pass
+
+  @watchitem_group.command(name="add", description="create an item in given watchlist")
+  async def watchitem_add(self, interaction : discord.Interaction, watchlist_id : int):
+    pass
+
+  @watchitem_group.command(name="edit", description="edit a watchlist item information")
+  async def watchitem_edit(self, interaction : discord.Interaction, watchitem_id : int):
+    pass

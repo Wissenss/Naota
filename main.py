@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 import discord
 from discord.ext import commands
 
-import connection
+import connectionPool
 
 import logging
 
@@ -40,7 +40,7 @@ async def setup_hook():
 	bot.help_command = CustomHelpCommand()
 
 	LOGGER.log(logging.INFO, "starting connection pool...")
-	connection.init_connection_pool()
+	connectionPool.init_connection_pool()
 
 	LOGGER.log(logging.INFO, "all set up!")
 	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")
