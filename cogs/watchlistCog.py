@@ -80,6 +80,28 @@ class WatchlistCog(commands.Cog):
     finally:
       connection.release_connection(conn)
 
+  async def __get_currently_watching_item(watchlist_id : int):
+    try:
+      conn = connection.get_connection()
+      curs = conn.cursor()
+
+      params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlist_id]
+
+      curs.execute("SELECT watchlist_item_id FROM watchlist_items WHERE status = ? AND watchlist_id = ? LIMIT 1", params)
+
+      record = curs.fetchone()
+
+      if record:
+        return record[0] 
+
+    except Exception as e:
+      LOGGER.log(logging.ERROR, f"unhandled exception on __get_currently_watching_item: {repr(e)}")
+    
+    finally:
+      connection.release_connection(conn)
+
+    return 0
+
   @commands.hybrid_command()
   async def watchlist_show(self, ctx : commands.Context, watchlist_id : int = 0):
     em = discord.Embed(title="Watchlist", description="", color=getDiscordMainColor())
@@ -159,6 +181,8 @@ class WatchlistCog(commands.Cog):
       params = [WATCHLIST_ITEM_STATUS_WATCHING, watchlist_id]
 
       curs.execute("UPDATE watchlist_items SET current_episode = current_episode + 1 WHERE status = ? AND watchlist_id = ?", params)
+
+      curs.execute("SELECT * from watchlist_items WHERE status = ? and watchlist_id")
 
       conn.commit()
 

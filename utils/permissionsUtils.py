@@ -8,12 +8,12 @@ the currently supported permissions are the following:
 for entire cogs:
 
 Cog_MusicPlayer
-Cog_KuvaCog
-Cog_ChemsCog
+Cog_WatchlistCog
+Cog_DevCog
 
 for individual commands:
 
-music_comments_get
+Command_Sync
 
 to determine if a certain permission is valid, it must be included in either
 the user permissions, the permissions of a group the user belongs to or the server
@@ -82,52 +82,26 @@ def get_context_permissions(ctx : commands.Context):
   print(f"context_permissions: {context_permissions}")
   return context_permissions
 
-def permission_allowed_in_context(ctx : commands.Context, permission : str):
+def permission_allowed_in_context(ctx : commands.Context, permission : str) -> bool:
   context_permissions = get_context_permissions(ctx)
 
   return permission in context_permissions
 
-def cog_allowed_in_context(ctx : commands.Context, cog : commands.Cog):
+def cog_allowed_in_context(ctx : commands.Context, cog : commands.Cog) -> bool:
   context_permissions = get_context_permissions(ctx)
 
   cog_permission = f"Cog_{cog.__cog_name__}"
 
-  print(f"checking cog permission: {cog_permission}")
-
   return cog_permission in context_permissions
 
-"""
-def get_member_permissions(member_id : str) -> list[str]:
-  with open("./data.json") as raw_file:
-    raw_data = raw_file.read()
-    data = json.loads(raw_data)
+def command_allowed_in_context(ctx : commands.Context, command : commands.Command) -> bool:
+  context_permissions = get_context_permissions(ctx)
 
-    user_permissions = []
+  command_permission = f"Command_{command.name}"
 
-    if member_id in data["users"]:
-      user_permissions = data["users"][member_id]["permissions"]
+  #print(f"checking command permission: {command_permission}")
 
-      for group in data["users"][member_id]["groups"]:
-        if group in data["groups"]:
-          user_permissions += data["groups"][group]["permissions"]
-
-    return user_permissions
-
-def member_has_permision(ctx : commands.Context, permission : str) -> bool:
-  member_id = ctx.author.id
-  
-  user_permissions = get_member_permissions(member_id)
-
-  return permission in user_permissions
-
-def member_cog_allowed(ctx : commands.Context, cog : commands.Cog) -> bool:
-  user_permissions = get_member_permissions()
-
-  print(f"checking permissions for cog: {cog.__cog_name__}")
-
-  return cog.__cog_name__ in user_permissions
-
-"""
+  return command_permission in context_permissions
 
 if __name__ == "__main__": 
   PERMISSIONS_FILE = "./../permissions.json"

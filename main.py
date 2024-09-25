@@ -4,24 +4,16 @@ from discord.ext import commands
 
 import connection
 
-import time
-import os
 import logging
-
-import git
-
-import sqlite3
 
 from settings import *
 
 from utils.variousUtils import getDiscordMainColor
 
 ############ cogs ############
-#from musicPlayer import MusicPlayer
-from cogs.musicPlayerCogV2 import MusicPlayer
-from cogs.kuvaCog import KuvaCog 
-from cogs.chemsCog import ChemsCog
+from cogs.musicPlayerCog import MusicPlayer
 from cogs.watchlistCog import WatchlistCog
+from cogs.devCog import DevCog
 ##############################
 
 from commands.helpCommand import *
@@ -38,20 +30,13 @@ async def on_ready():
 @bot.event
 async def setup_hook():
 	LOGGER.log(logging.INFO, "--------------------------- Initializing ---------------------------")
-	# LOGGER.log(logging.INFO, "connecting to database...")
-	# DB_CONNECTION = sqlite3.connect(DB_FILE_PATH)
 
 	LOGGER.log(logging.INFO, "loading cogs...")
 	await bot.add_cog(MusicPlayer(bot))
-	# await bot.add_cog(KuvaCog(bot))
-	await bot.add_cog(ChemsCog(bot))
 	await bot.add_cog(WatchlistCog(bot))
+	await bot.add_cog(DevCog(bot))
 	
 	LOGGER.log(logging.INFO, "loading other commands...")
-	bot.add_command(ping)
-	bot.add_command(changelog)
-	bot.add_command(sync)
-
 	bot.help_command = CustomHelpCommand()
 
 	LOGGER.log(logging.INFO, "starting connection pool...")
@@ -59,49 +44,6 @@ async def setup_hook():
 
 	LOGGER.log(logging.INFO, "all set up!")
 	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")
-
-@commands.command(brief="pong", description="test for correct bot connection")
-async def ping(ctx):
-	LOGGER.log(logging.INFO, f"ping called (Guild ID: {ctx.guild.id})")
-	
-	await ctx.send("pong")
-
-@commands.command(brief="shows the most recent changes", description="get a list of all the recent improvements, new features and bug fixes done to naota")
-async def changelog(ctx):
-	LOGGER.log(logging.INFO, f"changelog called (Guild ID: {ctx.guild.id})")
-
-	# obtain the log from local repo
-	repo = git.Repo(os.getcwd())
-
-	commit_list = list(repo.iter_commits(all=True))
-
-	# number of commits = version number
-	version = f"0.0.{len(commit_list)}"
-	
-	# show the last 5 commits messages
-	logs = ""
-
-	for i in range(5):
-		commit = commit_list[i]
-
-		date = time.gmtime(commit.committed_date)
-		author = commit.author
-		message = commit.message
-
-		logs += f"[{date.tm_year}/{date.tm_mon}/{date.tm_mday}] - {message}\n"
-
-	em = discord.Embed(title=f"Naota v_{version}", description=logs, color=getDiscordMainColor())
-	await ctx.send(embed=em)
-
-@commands.command(hidden=True)
-async def sync(ctx):
-	LOGGER.log(logging.INFO, f"sync called (Guild ID: {ctx.guild.id})")
-
-	await bot.tree.sync()
-
-	em = discord.Embed(description="syncing commands", color=getDiscordMainColor())
-
-	await ctx.send(embed=em)
 
 @bot.tree.command(name="help")
 async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : str = None):
@@ -114,7 +56,9 @@ async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : s
 		mapping: Dict[Optional[commands.Cog], List[commands.Command[Any, ..., Any]]] = {cog: cog.get_commands() for cog in bot.cogs.values()}
 		mapping[None] = [c for c in bot.commands if c.cog is None]
 
-		em = get_help_embed(interaction.context, mapping)
+		ctx = await commands.Context.from_interaction(interaction)
+
+		em = get_help_embed(ctx, mapping)
 		await interaction.response.send_message(embed=em)
 		return
 
