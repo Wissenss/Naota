@@ -92,6 +92,8 @@ def cog_allowed_in_context(ctx : commands.Context, cog : commands.Cog) -> bool:
 
   cog_permission = f"Cog_{cog.__cog_name__}"
 
+  #print(f"checking permission \"{cog_permission}\" for {ctx.author.name} on guild {ctx.guild.name}")
+
   return cog_permission in context_permissions
 
 def command_allowed_in_context(ctx : commands.Context, command : commands.Command) -> bool:
@@ -99,7 +101,7 @@ def command_allowed_in_context(ctx : commands.Context, command : commands.Comman
 
   command_permission = f"Command_{command.name}"
 
-  #print(f"checking command permission: {command_permission}")
+  #print(f"checking permission \"{command_permission}\" for {ctx.author.name} on guild {ctx.guild.name}")
 
   return command_permission in context_permissions
 

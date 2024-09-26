@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+import logging
+
 from settings import *
 
 from utils import permissionsUtils
@@ -25,6 +27,8 @@ class CustomCog(commands.Cog):
         
         em.description = f"permission denied for command **{ctx.command.name}**"
 
+        LOGGER.log(logging.ERROR, em.description)
+
         return await ctx.send(embed=em) 
     
     async def on_cog_permission_denied(self, ctx : commands.Context):
@@ -32,7 +36,13 @@ class CustomCog(commands.Cog):
         
         em.description = f"permission denied for cog **{self.__cog_name__}**"
 
+        LOGGER.log(logging.ERROR, em.description)
+
         return await ctx.send(embed=em)
     
-    async def on_exception(self, ctx : commands.Context, e : Exception):
-        return await ctx.send()
+    async def log_and_show_exception(self, interaction : discord.Interaction, e : Exception):
+        em = discord.Embed(title="", description=f"exception on {interaction.command.name}: {repr(e)}")
+        
+        LOGGER.log(logging.ERROR, em.description)
+
+        return await interaction.response.send_message(embed=em)
