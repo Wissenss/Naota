@@ -35,7 +35,7 @@ def create_watchlist_embed(interaction : discord.Interaction, watchlist_id : int
 
     watchlist_name = row_data[1]
     
-    em.title = f"Watchlist #{watchlist_id}: {watchlist_name}"
+    em.title = f"{watchlist_name}"
 
     curs.execute("SELECT * FROM watchlist_items WHERE watchlist_id = ? ORDER BY watchlist_item_id DESC;", [watchlist_id])
     rows_list = curs.fetchall()
@@ -45,8 +45,12 @@ def create_watchlist_embed(interaction : discord.Interaction, watchlist_id : int
       watchlist_id = row[1]
       name = row[2]
       author_id = row[3]
+      status = row[4]
 
-      em.description += f"\n{watchlist_item_id} - {name}"
+      if status == WATCHLIST_ITEM_STATUS_WATCHING:
+        em.description += f"\n**{watchlist_item_id} - {name}**"
+      else:
+        em.description += f"\n{watchlist_item_id} - {name}"
 
     connectionPool.release_connection(conn)
 
@@ -131,10 +135,11 @@ def create_watchitem_embed(interaction : discord.Interaction, watchitem_id : int
   episode_duration = raw_data[6]
   current_episode = raw_data[7]
 
-  em.description += f"\n**Name: **{name}"
+  em.title += f"{name}"
+
   em.description += f"\n**Status: **{watchlist_item_status_to_tag(status)}"
-  em.description += f"\nProgress: {(current_episode/total_episodes):.0%} ({current_episode}/{total_episodes})"
-  em.description += f"\nRemaining: {(total_episodes - current_episode) * episode_duration}min"
+  em.description += f"\n**Progress: **{(current_episode/total_episodes):.0%} ({current_episode}/{total_episodes})"
+  em.description += f"\n**Remaining: **{(total_episodes - current_episode) * episode_duration}min"
 
   return em
 
@@ -232,12 +237,39 @@ class WatchlistCog(CustomCog):
   "Keep track of movies and shows"
 
   watchlist_group = app_commands.Group(name="watchlist", description="operations for watchlists")
-  watchitem_group = app_commands.Group(name="watchlist_item", description="operations for items inside watchlists")
+  watchitem_group = app_commands.Group(name="item", description="operations for items inside watchlists")
 
   def __init__(self, bot : commands.Bot):
     self.bot = bot
 
     self.__cog_name__ = "Watchlist"
+
+  async def cog_before_invoke(self, ctx: commands.Context):
+    result =  super().cog_before_invoke(ctx)
+
+    if result:
+      self.ensure_default_playlist(ctx.interaction)
+
+    return result
+
+  def ensure_default_playlist(self, interaction : discord.Interaction):
+    if self.get_default_watchlist_id(interaction) != 0:
+      return
+
+    conn = connectionPool.get_connection()
+    curs = conn.cursor()
+
+    params = [
+      "default",
+      interaction.guild.id,
+      0
+    ]
+
+    curs.execute("INSERT INTO watchlists(watchlist_name, guild_id, owner_id) VALUES(?, ?, ?);", params)
+
+    conn.commit()
+
+    connectionPool.release_connection(conn)
 
   def get_default_watchlist_id(self, interaction : discord.Interaction):
     conn = connectionPool.get_connection()
@@ -246,7 +278,10 @@ class WatchlistCog(CustomCog):
     curs.execute("SELECT * FROM watchlists WHERE guild_id = ? ORDER BY watchlist_id ASC LIMIT 1", [interaction.guild.id])
     raw_data = curs.fetchone()
 
-    watchlist_id = raw_data[0]
+    if raw_data:
+      watchlist_id = raw_data[0]
+    else:
+      watchlist_id = 0
 
     connectionPool.release_connection(conn)
 
@@ -280,13 +315,17 @@ class WatchlistCog(CustomCog):
 
     return await interaction.response.send_message(embed=em)
 
+  # WATCHLIST
+
   @watchlist_group.command(name="show", description="show all items inside the watchlist")
-  async def watchlist_show(self, interaction : discord.Interaction, watchlist_id : int):
+  async def watchlist_show(self, interaction : discord.Interaction):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+    
     em = create_watchlist_embed(interaction, watchlist_id)
 
     return await interaction.response.send_message(embed=em)
 
-  @watchlist_group.command(name="list", description="show a list of all existing watchlists for current server")
+  # @watchlist_group.command(hidden=True, name="list", description="show a list of all existing watchlists for current server")
   async def watchlist_list(self, interaction : discord.Interaction):
     em = discord.Embed(title="Watchlists", description="", color=getDiscordMainColor())
 
@@ -312,14 +351,16 @@ class WatchlistCog(CustomCog):
     finally:
       connectionPool.release_connection(conn)
 
-  @watchlist_group.command(name="add", description="create a new watchlist")
+  # @watchlist_group.command(hidden=True, name="add", description="create a new watchlist")
   async def watchlist_add(self, interaction : discord.Interaction):
     modal = WatchlistModal(interaction)
 
     await interaction.response.send_modal(modal)
   
   @watchlist_group.command(name="edit", description="edita a watchlist")
-  async def watchlist_edit(self, interaction : discord.Interaction, watchlist_id : int):
+  async def watchlist_edit(self, interaction : discord.Interaction):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+    
     modal = WatchlistModal(interaction, watchlist_id)
 
     await interaction.response.send_modal(modal)
@@ -327,49 +368,71 @@ class WatchlistCog(CustomCog):
   # WATCHLIST ITEMS 
 
   @watchitem_group.command(name="show", description="show details for the give watchlist item")
-  async def watchitem_show(self, interaction : discord.Interaction, watchitem_id : int):
+  async def watchitem_show(self, interaction : discord.Interaction, watchitem_id : int = 0):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+    
+    if watchitem_id == 0:
+      watchitem_id = self.get_watching_item_id(interaction, watchlist_id)
+    
     em = create_watchitem_embed(interaction, watchitem_id)
 
     return await interaction.response.send_message(embed=em)
 
   @watchitem_group.command(name="watched", description="increments watch count by one")
-  async def watchitem_watched(self, interaction : discord.Interaction, watchitem_id : int):
+  async def watchitem_watched(self, interaction : discord.Interaction, watchitem_id : int = 0):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+    
+    if watchitem_id == 0:
+      watchitem_id = self.get_watching_item_id(interaction, watchlist_id)
+
     conn = connectionPool.get_connection()
     curs = conn.cursor()
 
-    curs.execute("UPDATE watchlist_items SET current_episode = current_episode + 1 WHERE watchlist_item_id = ?", watchitem_id)
+    curs.execute("UPDATE watchlist_items SET current_episode = current_episode + 1 WHERE watchlist_item_id = ?", [watchitem_id])
 
     conn.commit()
 
     connectionPool.release_connection(conn)
 
-    em = create_watchitem_embed(watchitem_id)
+    em = create_watchitem_embed(interaction, watchitem_id)
 
     return await interaction.response.send_message(embed=em)
 
   @watchitem_group.command(name="add", description="create an item in given watchlist")
-  async def watchitem_add(self, interaction : discord.Interaction, watchlist_id : int):
+  async def watchitem_add(self, interaction : discord.Interaction):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+    
     modal = WatchitemModal(interaction, 0, watchlist_id)
 
     return await interaction.response.send_modal(modal)
 
   @watchitem_group.command(name="edit", description="edit a watchlist item information")
-  async def watchitem_edit(self, interaction : discord.Interaction, watchitem_id : int):
+  async def watchitem_edit(self, interaction : discord.Interaction, watchitem_id : int = 0):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+
+    if watchitem_id == 0:
+      watchitem_id = self.get_watching_item_id(interaction, watchlist_id)
+    
     modal = WatchitemModal(interaction, watchitem_id)
 
     return await interaction.response.send_modal(modal)
   
   @watchitem_group.command(name="status", description="set the item status")
-  async def watchitem_status(self, interaction : discord.Interaction, watchitem_id : int = 0, status : int = 1):
+  async def watchitem_status(self, interaction : discord.Interaction, status : int = 1, watchitem_id : int = 0,):
+    watchlist_id = self.get_default_watchlist_id(interaction)
+
+    if watchitem_id == 0:
+      watchitem_id = self.get_watching_item_id(interaction, watchlist_id)
+    
     conn = connectionPool.get_connection()
     curs = conn.cursor()
 
     curs.execute("UPDATE watchlist_items SET status = ? WHERE watchlist_item_id = ?", [status, watchitem_id])
 
-    conn.execute()
+    conn.commit()
 
     connectionPool.release_connection(conn)
 
     em = create_watchitem_embed(interaction, watchitem_id)
 
-    return interaction.response.send_message(embed=em)
+    return await interaction.response.send_message(embed=em)
