@@ -17,3 +17,5 @@ regex
 pandas
 
 db-sqlite3
+python-chess
+cairosvg

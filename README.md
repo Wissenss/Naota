@@ -20,6 +20,10 @@ Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable
 2. [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) - For audio streaming
    
    odds are that you (like me) don't have this installed all ready. For a guide on how to do se we recomend [geeks for geeks tutorial](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/)
+
+3. [cairo](https://www.cairographics.org/) - Mainly for svg to png convertions 
+
+   in linux base distributions this is communly included, however in windows this is not the case. Precompiled binaries can be found [here](https://github.com/preshing/cairo-windows). The ddl should be on the system path.
 #### Setup:
 1. Get a local copy of the repository
 ```
