@@ -80,7 +80,7 @@ def get_cog_help_embed(cog : commands.Cog, ctx : commands.Context):
 
   description_ += "\n\n __**Commands**__"
 
-  for command in cog.get_commands():
+  for command in cog.get_commands() + cog.get_app_commands():
     description_ += f"\n **{COMMAND_PREFIX}{command.qualified_name}: ** {command.brief}"
 
   em = discord.Embed(title=f"", description=description_, color=getDiscordMainColor())

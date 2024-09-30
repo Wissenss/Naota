@@ -10,6 +10,7 @@ Naota has the following Cogs:
 
 1. MusicPlayer: commands to stream youtube music.
 2. Watchlist: commands to keep track of series or movies.
+3. Chess: commands to solve chess puzzles - thanks to lichess for providing the [puzzle dataset](https://database.lichess.org/#puzzles)
 
 ## For developers
 Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable/) and [YouTube Data API](https://developers.google.com/youtube/v3).
@@ -75,6 +76,7 @@ DB_FILE_PATH="./naota.db"
 The following permissions are available:
 1. MusicPlayerCog: Access to music player commands.
 2. WatchlistCog: Access to watchlist commands.
+3. ChessCog: Access to chess commands.
 
 To determine if a certain permission is valid, it must be included in either
 the user permissions, the permissions of a group the user belongs to or the server

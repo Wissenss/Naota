@@ -19,3 +19,4 @@ permissions.json
 default.txt
 
 *.db
+*.csv
