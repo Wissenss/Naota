@@ -77,13 +77,13 @@ class ChessCog(CustomCog):
 
         self.current_puzzle_id = self.get_unsolved_puzzle_id()
 
-    def get_unsolved_puzzle_id(self):
+    def get_unsolved_puzzle_id(self, max_movements = 10):
         conn = connectionPool.get_connection()
         curs = conn.cursor()
 
         params = [
             PUZZLE_STATUS_UNSOLVED,
-            2
+            max_movements
         ]
 
         curs.execute("SELECT * FROM puzzles WHERE status = ? AND no_moves <= ? LIMIT 1;", params)
@@ -110,26 +110,30 @@ class ChessCog(CustomCog):
         puzzle_id = raw_data[0]
         fen = raw_data[2]
         moves = raw_data[3]
-        status = raw_data[11]
+        no_moves = raw_data[11]
+        status = raw_data[12]
+        move_progress = raw_data[13]
 
         print(f"fen is: {fen}")
         print(f"moves are: {moves}")
+        print(f"move progress: {move_progress}")
 
         board = chess.Board(fen)
 
-        board.push(chess.Move.from_uci(moves.split(" ")[0]))
+        last_move = ""
+
+        for i in range(move_progress):
+            last_move = moves.split(" ")[i] 
+            board.push(chess.Move.from_uci(last_move))
 
         connectionPool.release_connection(conn)
 
-        return (board, puzzle_id, moves)
-        
-    @app_commands.command(name="puzzle", description="get a puzzle")
-    async def puzzle(self, interaction : discord.Interaction):
-        await self.cog_before_slash_invoke(interaction)
+        return (board, puzzle_id, moves, last_move)
 
+    async def send_current_puzzle(self, interaction : discord.Interaction):
         board : chess.Board
 
-        board, puzzle_id, moves = self.get_current_board()
+        board, puzzle_id, moves, last_move = self.get_current_board()
 
         colors = {
             "square light" : "#ffffff",
@@ -145,13 +149,19 @@ class ChessCog(CustomCog):
 
         file = discord.File(image, filename="unknown.png")
 
-        em = discord.Embed(title=f"Puzzle #{puzzle_id:05d}", description=f"{"white" if board.turn == chess.WHITE else "black"} to move", color=getDiscordMainColor())
+        em = discord.Embed(title=f"Puzzle #{puzzle_id:05d}", description=f"last move is {last_move}, {"white" if board.turn == chess.WHITE else "black"} to move", color=getDiscordMainColor())
 
         em.set_image(url="attachment://unknown.png")
 
-        #vi = PuzzleView()
-
         await interaction.response.send_message(file=file, embed=em)
+
+    @app_commands.command(name="puzzle", description="get a puzzle")
+    async def puzzle(self, interaction : discord.Interaction):
+        await self.cog_before_slash_invoke(interaction)
+
+        await self.send_current_puzzle(interaction)
+
+        return
 
     @app_commands.command(name="solution", description="give a solution to the current puzzle (in UCI format)")
     async def solution(self, interaction : discord.Interaction, move : str):
@@ -166,18 +176,34 @@ class ChessCog(CustomCog):
         puzzle_id = raw_data[0]
         fen = raw_data[2]
         moves = raw_data[3]
-        status = raw_data[11]
+        rating = raw_data[4]
+        no_moves = raw_data[11]
+        status = raw_data[12]
+        move_progress = raw_data[13]
 
         connectionPool.release_connection(conn)
 
         em = discord.Embed(title="", description="", color=getDiscordMainColor())
 
-        print(f"the correct move is: {move.split(" ")[-1]}")
+        corrent_move = moves.split(" ")[move_progress]
+        print(f"the correct move is: {corrent_move}")
 
-        if move.lower() != moves.split(" ")[-1]:
+        if move.lower() != corrent_move:
             em.description = f"**{move}** is wrong"
             return await interaction.response.send_message(embed=em)
-        
+
+        if move_progress + 1 < no_moves:
+            conn = connectionPool.get_connection()
+            curs = conn.cursor()
+
+            curs.execute("UPDATE puzzles SET move_progress = move_progress + 2 WHERE puzzle_id = ?;", [self.current_puzzle_id])
+
+            conn.commit()
+
+            connectionPool.release_connection(conn)
+
+            return await self.send_current_puzzle(interaction)
+
         conn = connectionPool.get_connection()
         curs = conn.cursor()
 
@@ -188,15 +214,22 @@ class ChessCog(CustomCog):
 
         curs.execute("UPDATE puzzles SET status = ? WHERE puzzle_id = ?;", params)
 
-        curs.execute("UPDATE users SET puzzles_ranking = puzzles_ranking + 10 WHERE discord_user_id = ?", [interaction.user.id])
+        reward = int(rating / 10)
+
+        params = [
+            reward,
+            interaction.user.id
+        ]
+
+        curs.execute("UPDATE users SET puzzles_ranking = puzzles_ranking + ? WHERE discord_user_id = ?;", params)
 
         conn.commit()
 
         self.current_puzzle_id = self.get_unsolved_puzzle_id()
 
-        connectionPool.release_connection(conn)
+        em.description = f"**{move}** is right! **+ {reward}pts**"
 
-        em.description = f"**{move}** is right!"
+        connectionPool.release_connection(conn)
 
         return await interaction.response.send_message(embed=em)
 
@@ -207,7 +240,7 @@ class ChessCog(CustomCog):
         conn = connectionPool.get_connection()
         curs = conn.cursor()
 
-        curs.execute("SELECT * FROM users ORDER BY puzzles_ranking LIMIT 10;")
+        curs.execute("SELECT * FROM users ORDER BY puzzles_ranking DESC LIMIT 10;")
         rows = curs.fetchall()
 
         connectionPool.release_connection(conn)
