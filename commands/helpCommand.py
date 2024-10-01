@@ -25,14 +25,24 @@ def get_help_embed(ctx : commands.Context, mapping):
     else:
       desciption_ += "\n\n__**No Category**__"
 
-    for command in cmds:
-      if command.hidden: 
+    commands_list = []
+
+    if cog:
+      commands_list += cog.get_commands()
+      commands_list += cog.get_app_commands()
+    else:
+      commands_list += cmds
+
+    for command in commands_list:
+      if isinstance(command, commands.Command) and command.hidden: 
         continue
 
-      desciption_ += f"\n**{COMMAND_PREFIX}{command.qualified_name}: ** {command.brief}"
+      if isinstance(command, commands.Command):
+        desciption_ += f"\n**{COMMAND_PREFIX}{command.qualified_name}: ** {command.brief}"
+      else:
+        desciption_ += f"\n**{COMMAND_PREFIX}{command.qualified_name}: ** {command.description}"
 
-      if isinstance(command, commands.Group):
-        command : commands.Group
+      if isinstance(command, (commands.Group, app_commands.Group)):
         desciption_ += f" ({len(command.commands)} sub-commands)" 
 
   desciption_ += f"\n\nType `{COMMAND_PREFIX}help command_name` for more info on a command. You can also type `{COMMAND_PREFIX}help category_name` for more info on a category"
@@ -81,7 +91,7 @@ def get_cog_help_embed(cog : commands.Cog, ctx : commands.Context):
   description_ += "\n\n __**Commands**__"
 
   for command in cog.get_commands() + cog.get_app_commands():
-    description_ += f"\n **{COMMAND_PREFIX}{command.qualified_name}: ** {command.brief}"
+    description_ += f"\n **{COMMAND_PREFIX}{command.qualified_name}: ** {command.description}"
 
   em = discord.Embed(title=f"", description=description_, color=getDiscordMainColor())
 

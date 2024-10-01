@@ -53,12 +53,12 @@ async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : s
 
 	# [TODO] handle resource not found exception
 
+	ctx = await commands.Context.from_interaction(interaction)
+
 	if resource == None:
 		# Retrieve the bot mapping. this is basically a copy of the method behaviour inside HelpCommand class
 		mapping: Dict[Optional[commands.Cog], List[commands.Command[Any, ..., Any]]] = {cog: cog.get_commands() for cog in bot.cogs.values()}
 		mapping[None] = [c for c in bot.commands if c.cog is None]
-
-		ctx = await commands.Context.from_interaction(interaction)
 
 		em = get_help_embed(ctx, mapping)
 		await interaction.response.send_message(embed=em)
@@ -66,7 +66,7 @@ async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : s
 
 	cog = bot.get_cog(resource)
 	if cog != None:
-		em = get_cog_help_embed(cog)
+		em = get_cog_help_embed(cog, ctx)
 		await interaction.response.send_message(embed=em)
 		return
 
