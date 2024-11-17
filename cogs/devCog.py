@@ -33,7 +33,10 @@ class DevCog (CustomCog):
     @commands.hybrid_command(brief="shows the most recent changes", description="get a list of all the recent improvements, new features and bug fixes done to naota")
     async def changelog(self, ctx : commands.Context):
         # obtain the log from local repo
-        repo = git.Repo(os.getcwd())
+        if GIT_REPO:
+            repo = git.Repo(GIT_REPO)
+        else:
+            repo = git.Repo(os.getcwd())
 
         commit_list = list(repo.iter_commits(all=True))
 
