@@ -319,6 +319,8 @@ class WatchlistCog(CustomCog):
 
   @watchlist_group.command(name="show", description="show all items inside the watchlist")
   async def watchlist_show(self, interaction : discord.Interaction):
+    self.ensure_default_playlist(interaction)
+    
     watchlist_id = self.get_default_watchlist_id(interaction)
     
     em = create_watchlist_embed(interaction, watchlist_id)
