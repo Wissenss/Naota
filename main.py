@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from typing import Any, Dict, List, Optional
 import discord
 from discord.ext import commands
