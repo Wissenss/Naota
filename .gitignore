@@ -9,6 +9,10 @@ __pycache__/
 /lib
 lib64
 /share
+/dist
+/build
+
+main.spec
 
 pyvenv.cfg
 
