@@ -19,3 +19,6 @@ pandas
 db-sqlite3
 python-chess
 cairosvg
+
+july
+audioop-lts
