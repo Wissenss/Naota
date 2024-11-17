@@ -16,6 +16,8 @@ MAIN_COLOR = os.getenv("MAIN_COLOR")
 LOG_LEVEL = os.getenv("LOG_LEVEL")
 LOGGER = logging.getLogger('discord.bot')
 
+GIT_REPO = os.getenv("GIT_REPO")
+
 handler = logging.FileHandler("./naota.log")
 handler.formatter = logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
 
