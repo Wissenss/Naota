@@ -301,6 +301,18 @@ class AudioBuffer:
 
     return (data, outtmpl)
 
+  @staticmethod
+  def get_size():
+    size = 0
+    count = 0
+
+    for filename in os.listdir(AudioBuffer.__buffer_path):
+      filepath = os.path.join(AudioBuffer.__buffer_path, filename) 
+
+      count += 1
+      size += os.path.getsize(filepath)
+
+    return count, size
 
 class AudioQueue:
   def __init__(self):
@@ -583,7 +595,7 @@ class MusicPlayer(commands.Cog):
         await msg.edit(embed=em)
         return
 
-    voice_channel = ctx.guild.voice_client
+    voice_channel = ctx.voice_client
 
     if not voice_channel:
       voice_channel = await ctx.author.voice.channel.connect()
