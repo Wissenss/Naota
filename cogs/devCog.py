@@ -17,7 +17,6 @@ class DevCog (CustomCog):
         super().__init__(bot)
 
         self.start_time = datetime.datetime.now()
-        self.bot = bot
         self.__cog_name__ = "Dev"
 
     @commands.hybrid_command(brief="pong", description="test for correct bot connection")

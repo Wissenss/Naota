@@ -17,6 +17,7 @@ from cogs.musicPlayerCog import MusicPlayer
 from cogs.watchlistCog import WatchlistCog
 from cogs.devCog import DevCog
 from cogs.chessCog import ChessCog
+from cogs.twitterCog import TwitterCog
 ##############################
 
 from commands.helpCommand import *
@@ -39,6 +40,7 @@ async def setup_hook():
 	await bot.add_cog(WatchlistCog(bot))
 	await bot.add_cog(DevCog(bot))
 	await bot.add_cog(ChessCog(bot))
+	await bot.add_cog(TwitterCog(bot))
 	
 	LOGGER.log(logging.INFO, "loading other commands...")
 	bot.help_command = CustomHelpCommand()

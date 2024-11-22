@@ -18,6 +18,13 @@ LOGGER = logging.getLogger('discord.bot')
 
 GIT_REPO = os.getenv("GIT_REPO")
 
+TWITTER_KEY = os.getenv("TWITTER_KEY")
+TWITTER_SECRET = os.getenv("TWITTER_SECRET")
+TWITTER_BEARER = os.getenv("TWITTER_BEARER")
+TWITTER_ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
+TWITTER_ACCESS_TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+
+
 handler = logging.FileHandler("./naota.log")
 handler.formatter = logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
 

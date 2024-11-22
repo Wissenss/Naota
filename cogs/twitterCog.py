@@ -1,0 +1,75 @@
+import discord
+from discord.ext import commands
+from settings import *
+from utils.variousUtils import getDiscordMainColor
+import git
+import time
+import datetime
+import os
+import random
+from utils import permissionsUtils
+import tweepy
+
+from cogs.customCog import CustomCog
+
+from cogs.musicPlayerCog import AudioBuffer
+
+class TwitterCog(CustomCog):
+  def __init__(self, bot : commands.Bot):
+    super().__init__(bot)
+
+    self.__cog_name__ = "Twitter"
+
+    self.twitter_api = tweepy.Client(
+      consumer_key=TWITTER_KEY,
+      consumer_secret=TWITTER_SECRET,
+      bearer_token=TWITTER_BEARER,
+      access_token=TWITTER_ACCESS_TOKEN,
+      access_token_secret=TWITTER_ACCESS_TOKEN_SECRET
+    )
+
+    self.twitter_cache = []
+    self.last_time_cached = datetime.datetime.now() - datetime.timedelta(days=2)
+
+  @commands.hybrid_command(brief="", description="")
+  async def sheinbaum(self, ctx : commands.Context):
+    em = discord.Embed(title="", description="", color=getDiscordMainColor())
+
+    sheinbaum_twitter_id = 591361197
+
+    if self.last_time_cached < datetime.datetime.now() - datetime.timedelta(days=1):
+    # try to update the cache 
+      try:
+        print("iniciando solicitud...")
+
+        response = self.twitter_api.get_users_tweets(id=sheinbaum_twitter_id, max_results=5)
+        self.twitter_cache = response.data
+
+        print("respuesta obtenida:")
+        print(response.data)
+
+        self.last_time_cached = datetime.datetime.now()
+      except Exception as e:
+        print(f"exception happend when retrieving tweets: {repr(e)}")
+    
+    if not self.twitter_cache:
+      em.color = discord.Color.red()
+      em.description = "Could not retrieve tweets. Most likely the quota was exceeded."
+      return await ctx.send(embed=em)
+    
+    print(f"self.twitter_cache: {self.twitter_cache}")
+
+    # get a random tweet from cache
+    tweet = random.choices(self.twitter_cache)[0]
+
+    print(f"tweet: {tweet}")
+    print(f"tweet.id: {tweet.id}")
+    print(f"tweet.text: {tweet.text}")
+
+    profile_url = "https://x.com/Claudiashein"
+    tweet_url = f"https://x.com/Claudiashein/status/{tweet.id}"
+
+    em.set_author(name="Claudia Sheinbaum Pardo", url=tweet_url, icon_url="https://pbs.twimg.com/profile_images/1845487232989483008/xJGRmkR0_400x400.jpg")
+    em.description = tweet.text
+
+    await ctx.send(embed=em)

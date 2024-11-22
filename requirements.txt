@@ -22,3 +22,6 @@ cairosvg
 
 july
 audioop-lts
+
+tweepy
+standard-imghdr
