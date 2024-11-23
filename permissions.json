@@ -1,0 +1,36 @@
+{
+  "users" : {
+    "334016584093794305" : {
+      "alias" : "wissens",
+      "permissions" : ["Command_sync"],
+      "groups" : ["default", "dev"]
+    }, 
+    "334150375051493377" : {
+      "alias" : "cholulenz",
+      "permissions" : [],
+      "groups" : ["default"]
+    }
+  },
+  "servers" : {
+    "638943159581147137" : {
+      "alias" : "kuva clan",
+      "permissions" : ["Cog_Watchlist", "Cog_Dev"]
+    },
+    "821940114648334416" : {
+      "alias" : "butthole lovers",
+      "permissions" : ["Cog_Dev"]
+    },
+    "1178465444701687878" : {
+      "alias" : "naota dev",
+      "permissions" : ["Cog_MusicPlayer", "Cog_Watchlist", "Cog_Dev", "Cog_Chess", "Cog_Twitter"]
+    }
+  },
+  "groups" : {
+    "dev" : {
+      "permissions" : []
+    },
+    "default" : {
+      "permissions" : []
+    }
+  }
+}

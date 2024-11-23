@@ -19,7 +19,6 @@ pyvenv.cfg
 bugs.txt
 discordPermisions.txt
 naota.log
-permissions.json
 default.txt
 
 *.db

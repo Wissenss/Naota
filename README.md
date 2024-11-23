@@ -3,26 +3,31 @@ The Naota project is developed for academic popuses only. We do not hold ourselv
 
 > _"I'm a bot trying to be useful. Hope I'm not too buggy!"_ ~ Naota 2021 
 
-This code base can run on Windows and Linux with proper [setup](#setup).
+This code base can run on Windows and Linux with proper [installation](#installation).
 
 # Features and usage
 Naota has the following Cogs:
 
-1. MusicPlayer: commands to stream youtube music.
-2. Watchlist: commands to keep track of series or movies.
-3. Chess: commands to solve chess puzzles - thanks to lichess for providing the [puzzle dataset](https://database.lichess.org/#puzzles)
+- **MusicPlayer:** commands to stream youtube music.
+- **Watchlist:** commands to keep track of series or movies.
+- **Dev:** commands for general developer information and metrics.
+- **Chess:** commands to solve chess puzzles - thanks to lichess for providing the [puzzle dataset](https://database.lichess.org/#puzzles)
+- **Twitter:** commands to interact with the x/twitter API.
 
 ## For developers
-Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable/) and [YouTube Data API](https://developers.google.com/youtube/v3).
+Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable/) and the following APIs:
+
+- [YouTube Data API](https://developers.google.com/youtube/v3)
+- [X API](https://developer.x.com/en/products/x-api)
 
 ## Installation
 #### Prerequisites:
-1. [Python 3.8+](https://www.python.org/)
-2. [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) - For audio streaming
+- [Python 3.8+](https://www.python.org/)
+- [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) - For audio streaming
    
    odds are that you (like me) don't have this installed all ready. For a guide on how to do se we recomend [geeks for geeks tutorial](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/)
 
-3. [cairo](https://www.cairographics.org/) - Mainly for svg to png convertions 
+- [cairo](https://www.cairographics.org/) - Mainly for svg to png convertions 
 
    in linux base distributions this is communly included, however in windows this is not the case. Precompiled binaries can be found [here](https://github.com/preshing/cairo-windows). The ddl should be on the system path.
 #### Setup:
@@ -39,59 +44,52 @@ pip install -r requirements.txt
 DISCORD_TOKEN="YOUR DISCORD TOKEN"
 YOUTUBE_TOKEN="YOUR YOUTUBE API TOKEN"
 CODEFORCES_TOKEN="YOUR CODEFORCES API TOKEN"
+TWITTER_KEY = "YOUR TWITTER KEY"
+TWITTER_SECRET = "YOUR TWITTER SECRET"
+TWITTER_BEARER = "YOUR TWITTER BEARER TOKEN"
+TWITTER_ACCESS_TOKEN = "YOUR TWITTER ACCESS TOKEN"
+TWITTER_ACCESS_TOKEN_SECRET = "YOUR TWITTER TOKEN SECRET"
 
 COMMAND_PREFIX="/"
 MAIN_COLOR="dark_blue"
 
 LOG_LEVEL="DEBUG"
 
+GIT_REPO="./.git"
 DB_FILE_PATH="./naota.db"
+PERMISSIONS_FILE_PATH="./permissions.json"
 ```
-`YOUTUBE_TOKEN` and `CODEFORCES_TOKEN` are not actively being used, so not defining them will probably be fine for now but it's recommended to do so.
+`YOUTUBE_TOKEN` and `CODEFORCES_TOKEN` are not actively being used, so asigning the to empty strings will probably be fine for now.
 
-4. (Optional) Create a permissions.json, (use to define per server or per user permissions). The file follows this structure:
-```json
-{
-   "Users" : {
-      "discordMemberId" : {
-         "Alias" : A STRING VALUE FOR REFERENCE ONLY, AS YOU PROBABLY WONT IDENTIFY A CERTAIN USER BY IT'S DISCORD ID
-         "Groups" : [],
-         "Permissions": []
-      }
-   },
-   "Servers" : {
-      "discordServerId": {
-         "Alias" : ANOTHER STRING VALUE FOR REFERENCE
-         "Groups" : [],
-         "Permissions" : []
-      }
-   },
-   "Groups" : [
-      "groupName" : {
-         "Permissions" : []
-      }
-   ]
-}
-```
-The following permissions are available:
-1. MusicPlayerCog: Access to music player commands.
-2. WatchlistCog: Access to watchlist commands.
-3. ChessCog: Access to chess commands.
+4. (Optional) Modify [the permissions.json]() file.
 
-To determine if a certain permission is valid, it must be included in either
+## The permissions JSON
+Use it to allow per server or per user behaviour. The following permissions are available:
+
+#### For entire cogs:
+- Cog_MusicPlayer
+- Cog_WatchlistCog
+- Cog_Dev
+- Cog_Chess
+- Cog_Twitter
+
+#### For individual commands:
+- Command_Sync
+
+To determine if a certain action is allowed, it must be included in either
 the user permissions, the permissions of a group the user belongs to or the server
 permissions from where the request was issued.
 
 ## Discord Scopes and Permissions
 The application will request the following from your server:
 #### Scopes:
-1. bot
-2. application.commands
+- bot
+- application.commands
 #### Permissions:
-1. Send Messages
-2. Manage Messages
-3. Connect
-4. Speek
-5. Use Application Commands
+- Send Messages
+- Manage Messages
+- Connect
+- Speek
+- Use Application Commands
 
 The permision integer for them is `2150640640`.

@@ -1,5 +1,6 @@
 import io
 import math
+import logging
 from typing import Coroutine
 
 import chess.pgn
@@ -14,7 +15,7 @@ import chess.svg
 import connectionPool
 from cogs.customCog import CustomCog
 
-import settings
+from settings import LOGGER
 from utils.variousUtils import getDiscordMainColor
 
 PUZZLE_STATUS_UNSOLVED = 0
@@ -52,7 +53,6 @@ class NextButton(discord.ui.Button):
         super().__init__(label="next")
 
     async def callback(self, interaction: discord.Interaction):
-        print("wololo button callback")
         await interaction.response.defer()
 
 class PuzzleView(discord.ui.View):
@@ -100,6 +100,8 @@ class ChessCog(CustomCog):
         return puzzle_id
 
     def get_current_board(self):
+        LOGGER.log(logging.debug, "creating board")
+
         conn = connectionPool.get_connection()
         curs = conn.cursor()
 
@@ -114,9 +116,9 @@ class ChessCog(CustomCog):
         status = raw_data[12]
         move_progress = raw_data[13]
 
-        print(f"fen is: {fen}")
-        print(f"moves are: {moves}")
-        print(f"move progress: {move_progress}")
+        LOGGER.log(logging.debug, f"fen: {fen}")
+        LOGGER.log(logging.debug, f"moves: {moves}")
+        LOGGER.log(logging.debug, f"move_progress: {move_progress}")
 
         board = chess.Board(fen)
 
@@ -186,7 +188,7 @@ class ChessCog(CustomCog):
         em = discord.Embed(title="", description="", color=getDiscordMainColor())
 
         corrent_move = moves.split(" ")[move_progress]
-        print(f"the correct move is: {corrent_move}")
+        #print(f"the correct move is: {corrent_move}")
 
         if move.lower() != corrent_move:
             em.description = f"**{move}** is wrong"
@@ -255,14 +257,14 @@ class ChessCog(CustomCog):
             try:
                 user = await self.bot.fetch_user(discord_user_id)
 
-                print(f"discord id: {discord_user_id}")
-                print(f"user object: {user}")
+                #print(f"discord id: {discord_user_id}")
+                #print(f"user object: {user}")
 
                 em.description += f"\n{puzzle_ranking:04d} - {user.display_name}"
 
             except Exception as e:
                 # [TODO] delete the user record if not found
-                print(f"unhandled exception: {repr(e)}")
+                LOGGER.log(logging.error, f"unhandled exception: {repr(e)}")
             
             
         return await interaction.response.send_message(embed=em)

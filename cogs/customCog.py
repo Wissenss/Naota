@@ -13,12 +13,12 @@ class CustomCog(commands.Cog):
         self.bot = bot
     
     async def cog_before_invoke(self, ctx: commands.Context):
-        LOGGER.log(logging.INFO, f"{ctx.command.name} called (USER ID {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
+        LOGGER.log(logging.INFO, f"{ctx.command.qualified_name} called (USER ID {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
 
         self.ensure_user_record(ctx.author.id)
 
     async def cog_before_slash_invoke(self, interaction: discord.Interaction):
-        LOGGER.log(logging.INFO, f"{interaction.command.name} called (USER ID {interaction.user.id}) (GUILD ID: {interaction.guild.id})")
+        LOGGER.log(logging.INFO, f"{interaction.command.qualified_name} called (USER ID {interaction.user.id}) (GUILD ID: {interaction.guild.id})")
 
         self.ensure_user_record(interaction.user.id)
 
@@ -56,14 +56,15 @@ class CustomCog(commands.Cog):
         return await interaction.response.send_message(embed=em)
     
     def ensure_user_record(self, discord_user_id : int):
-        print("ensuring user record...")
+        LOGGER.log(logging.DEBUG, f"ensuring user record (USER ID {discord_user_id})")
+
         conn = connectionPool.get_connection()
         curs = conn.cursor()
 
         curs.execute("SELECT * FROM users WHERE discord_user_id = ?;", [discord_user_id])
 
         if not curs.fetchone():
-            print(f"the record does not exists... user_id: {discord_user_id}")
+            LOGGER.log(logging.DEBUG,  f"the user record does not exists (USER ID {discord_user_id})")
 
             params = [
                 discord_user_id,

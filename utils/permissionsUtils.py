@@ -1,6 +1,10 @@
+import logging
+
 import json
 import discord
 from discord.ext import commands
+
+from settings import LOGGER, PERMISSIONS_FILE_PATH
 
 """
 the currently supported permissions are the following:
@@ -9,7 +13,9 @@ for entire cogs:
 
 Cog_MusicPlayer
 Cog_WatchlistCog
-Cog_DevCog
+Cog_Dev
+Cog_Chess
+Cog_Twitter
 
 for individual commands:
 
@@ -21,7 +27,7 @@ permissions from where the request was issued.
 
 """
 
-PERMISSIONS_FILE = "./permissions.json"
+PERMISSIONS_FILE = PERMISSIONS_FILE_PATH
 PERMISSIONS = None
 
 # function that gets the permissions data. Also a permissions cog would be a good idea to crud permissions
@@ -79,7 +85,6 @@ def get_context_permissions(ctx : commands.Context):
 
   context_permissions += get_server_permissions(ctx.guild.id)
 
-  print(f"context_permissions: {context_permissions}")
   return context_permissions
 
 def permission_allowed_in_context(ctx : commands.Context, permission : str) -> bool:
@@ -92,18 +97,22 @@ def cog_allowed_in_context(ctx : commands.Context, cog : commands.Cog) -> bool:
 
   cog_permission = f"Cog_{cog.__cog_name__}"
 
-  #print(f"checking permission \"{cog_permission}\" for {ctx.author.name} on guild {ctx.guild.name}")
+  permited = cog_permission in context_permissions
 
-  return cog_permission in context_permissions
+  LOGGER.log(logging.DEBUG, f"checking permission \"{cog_permission}\" for {ctx.author.name} on guild {ctx.guild.name}... RESULT: {permited}")
+
+  return permited
 
 def command_allowed_in_context(ctx : commands.Context, command : commands.Command) -> bool:
   context_permissions = get_context_permissions(ctx)
 
   command_permission = f"Command_{command.name}"
 
-  #print(f"checking permission \"{command_permission}\" for {ctx.author.name} on guild {ctx.guild.name}")
+  permited = command_permission in context_permissions
 
-  return command_permission in context_permissions
+  LOGGER.log(logging.DEBUG, f"checking permission \"{command_permission}\" for {ctx.author.name} on guild {ctx.guild.name}... RESULT: {permited}")
+
+  return permited
 
 if __name__ == "__main__": 
   PERMISSIONS_FILE = "./../permissions.json"
