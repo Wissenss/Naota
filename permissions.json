@@ -14,11 +14,11 @@
   "servers" : {
     "638943159581147137" : {
       "alias" : "kuva clan",
-      "permissions" : ["Cog_Watchlist", "Cog_Dev"]
+      "permissions" : ["Cog_Watchlist", "Cog_Dev", "Cog_Chess", "Cog_MusicPlayer", "Cog_Twitter"]
     },
     "821940114648334416" : {
       "alias" : "butthole lovers",
-      "permissions" : ["Cog_Dev"]
+      "permissions" : ["Cog_Dev", "Cog_Chess", "Cog_MusicPlayer"]
     },
     "1178465444701687878" : {
       "alias" : "naota dev",
