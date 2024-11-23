@@ -78,3 +78,21 @@ class DevCog (CustomCog):
 
         em = discord.Embed(title=f"Naota v_{version}", description=logs, color=getDiscordMainColor())
         await ctx.send(embed=em)
+
+    @commands.hybrid_command(brief="show the log", description="get a list of the lastest log entries, output will depend on LOG_LEVEL, by default INFO")
+    async def log(self, ctx, lines = 25):
+        title_ = f"Naota.log at {datetime.datetime.now()} last {lines} lines"
+        
+        description_ = "```" 
+        
+        with open("Naota.log", "r") as log_file:
+            for line in (log_file.readlines()[-lines:]):
+                description_ += line
+
+            description_ = description_[:4096 - 3] # embeds description must be 4096 or fewer in length
+
+        description_ += "```"
+
+        em = discord.Embed(title=title_, description=description_, color=getDiscordMainColor())
+            
+        await ctx.send(embed=em)
