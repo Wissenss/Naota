@@ -12,7 +12,7 @@ from settings import *
 
 from utils.variousUtils import getDiscordMainColor
 
-import pyautogui
+import keyboard
 import datetime
 
 ############ cogs ############
@@ -97,7 +97,7 @@ async def pressSpace(ctx):
 	
 	em = discord.Embed(description="pressing space...", color=getDiscordMainColor())
 	await ctx.send(embed=em)
-	pyautogui.press("space")
+	keyboard.press_and_release("space")
 
 @bot.tree.command(name="help")
 async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : str = None):

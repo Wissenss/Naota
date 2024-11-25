@@ -35,4 +35,4 @@ CodeforcesApiPy
 urllib3
 july
 audioop-lts
-pyautogui
+keyboard
