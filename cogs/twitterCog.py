@@ -31,7 +31,7 @@ class TwitterCog(CustomCog):
     self.twitter_cache = []
     self.last_time_cached = datetime.datetime.now() - datetime.timedelta(days=2)
 
-  @commands.hybrid_command(brief="", description="")
+  @commands.hybrid_command(brief="the most recent tweets", description="get one of the top 5 most recent tweets from Claudia Sheinbaum Pardo")
   async def sheinbaum(self, ctx : commands.Context):
     em = discord.Embed(title="", description="", color=getDiscordMainColor())
 
@@ -40,31 +40,30 @@ class TwitterCog(CustomCog):
     if self.last_time_cached < datetime.datetime.now() - datetime.timedelta(days=1):
     # try to update the cache 
       try:
-        print("iniciando solicitud...")
+        LOGGER.log(logging.debug, "obtaining tweets from X API")
 
         response = self.twitter_api.get_users_tweets(id=sheinbaum_twitter_id, max_results=5)
         self.twitter_cache = response.data
 
-        print("respuesta obtenida:")
-        print(response.data)
+        LOGGER.log(logging.debug, f"response: {response.data}")
 
         self.last_time_cached = datetime.datetime.now()
       except Exception as e:
-        print(f"exception happend when retrieving tweets: {repr(e)}")
+        LOGGER.log(logging.error, f"exception happend when retrieving tweets: {repr(e)}")
     
     if not self.twitter_cache:
       em.color = discord.Color.red()
       em.description = "Could not retrieve tweets. Most likely the quota was exceeded."
       return await ctx.send(embed=em)
     
-    print(f"self.twitter_cache: {self.twitter_cache}")
+    LOGGER.log(logging.debug, f"self.twitter_cache: {self.twitter_cache}")
 
     # get a random tweet from cache
     tweet = random.choices(self.twitter_cache)[0]
 
-    print(f"tweet: {tweet}")
-    print(f"tweet.id: {tweet.id}")
-    print(f"tweet.text: {tweet.text}")
+    LOGGER.log(logging.debug, f"tweet: {tweet}")
+    LOGGER.log(logging.debug, f"tweet.id: {tweet.id}")
+    LOGGER.log(logging.debug, f"tweet.text: {tweet.text}")
 
     profile_url = "https://x.com/Claudiashein"
     tweet_url = f"https://x.com/Claudiashein/status/{tweet.id}"

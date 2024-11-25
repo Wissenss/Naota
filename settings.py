@@ -26,6 +26,9 @@ GIT_REPO = os.getenv("GIT_REPO")
 # permissions
 PERMISSIONS_FILE_PATH = os.getenv("PERMISSIONS_FILE_PATH")
 
+# webdrivers
+CHROME_DRIVER = os.getenv("CHROME_DRIVER")
+
 # logger
 LOG_LEVEL = os.getenv("LOG_LEVEL")
 LOGGER = logging.getLogger('discord.bot')

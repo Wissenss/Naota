@@ -1,27 +1,38 @@
+# database
+db-sqlite3
+
+# discord API
 discord.py[voice]
 python-dotenv
 
-urllib3
-
+# youtube API 
 yt-dlp
-
 google-api-python-client
 google-auth-oauthlib 
 google-auth-httplib2
 
+# github
 gitpython
 
+# data analysis / web scraping
 selenium
 nltk
 regex
 pandas
 
-db-sqlite3
+# chess cog
 python-chess
 cairosvg
 
-july
-audioop-lts
-
+# x/twitter API
 tweepy
 standard-imghdr
+
+# codeforces API
+CodeforcesApiPy
+
+# other
+urllib3
+july
+audioop-lts
+pyautogui
