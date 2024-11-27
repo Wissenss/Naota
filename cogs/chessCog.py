@@ -17,6 +17,7 @@ from cogs.customCog import CustomCog
 
 from settings import LOGGER
 from utils.variousUtils import getDiscordMainColor
+from utils import achivementsUtils
 
 PUZZLE_STATUS_UNSOLVED = 0
 PUZZLE_STATUS_SOLVED = 1
@@ -100,7 +101,7 @@ class ChessCog(CustomCog):
         return puzzle_id
 
     def get_current_board(self):
-        LOGGER.log(logging.debug, "creating board")
+        LOGGER.log(logging.DEBUG, "creating board")
 
         conn = connectionPool.get_connection()
         curs = conn.cursor()
@@ -116,9 +117,9 @@ class ChessCog(CustomCog):
         status = raw_data[12]
         move_progress = raw_data[13]
 
-        LOGGER.log(logging.debug, f"fen: {fen}")
-        LOGGER.log(logging.debug, f"moves: {moves}")
-        LOGGER.log(logging.debug, f"move_progress: {move_progress}")
+        LOGGER.log(logging.DEBUG, f"fen: {fen}")
+        LOGGER.log(logging.DEBUG, f"moves: {moves}")
+        LOGGER.log(logging.DEBUG, f"move_progress: {move_progress}")
 
         board = chess.Board(fen)
 
@@ -188,7 +189,7 @@ class ChessCog(CustomCog):
         em = discord.Embed(title="", description="", color=getDiscordMainColor())
 
         corrent_move = moves.split(" ")[move_progress]
-        #print(f"the correct move is: {corrent_move}")
+        LOGGER.log(logging.DEBUG, f"the correct move is: {corrent_move}")
 
         if move.lower() != corrent_move:
             em.description = f"**{move}** is wrong"
@@ -233,7 +234,11 @@ class ChessCog(CustomCog):
 
         connectionPool.release_connection(conn)
 
-        return await interaction.response.send_message(embed=em)
+        await interaction.response.send_message(embed=em)
+
+        ctx = await self.bot.get_context(interaction)
+
+        await achivementsUtils.observe_achivement(2, ctx)
 
     @app_commands.command(name="ranking", description="get the global ranking")
     async def ranking(self, interaction : discord.Interaction):
@@ -264,7 +269,7 @@ class ChessCog(CustomCog):
 
             except Exception as e:
                 # [TODO] delete the user record if not found
-                LOGGER.log(logging.error, f"unhandled exception: {repr(e)}")
+                LOGGER.log(logging.ERROR, f"unhandled exception: {repr(e)}")
             
             
         return await interaction.response.send_message(embed=em)

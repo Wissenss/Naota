@@ -22,6 +22,7 @@ from cogs.devCog import DevCog
 from cogs.chessCog import ChessCog
 from cogs.twitterCog import TwitterCog
 from cogs.competitiveProgrammingCog import CompetitiveProgramming
+from cogs.achivementCog import AchivementCog
 ##############################
 
 from commands.helpCommand import *
@@ -47,6 +48,7 @@ async def setup_hook():
 	await bot.add_cog(DevCog(bot))
 	await bot.add_cog(ChessCog(bot))
 	await bot.add_cog(TwitterCog(bot))
+	await bot.add_cog(AchivementCog(bot))
 	#await bot.add_cog(CompetitiveProgramming(bot))
 	
 	LOGGER.log(logging.INFO, "loading other commands...")

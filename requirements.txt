@@ -36,3 +36,4 @@ urllib3
 july
 audioop-lts
 keyboard
+pillow

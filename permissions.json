@@ -22,7 +22,7 @@
     },
     "1178465444701687878" : {
       "alias" : "naota dev",
-      "permissions" : ["Cog_MusicPlayer", "Cog_Watchlist", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming"]
+      "permissions" : ["Cog_MusicPlayer", "Cog_Watchlist", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming", "Cog_Achivement"]
     }
   },
   "groups" : {
