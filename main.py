@@ -66,38 +66,39 @@ async def setup_hook():
 
 # 	await ctx.send(embed=em)
 
-@bot.hybrid_command(name="allow", brief="allow certain action", hidden=True)
-async def Allow(ctx, action : str):
-	if not permissionsUtils.command_allowed_in_context(ctx, ctx.command):
-		return
+# must check how to raise key presses on main session
+# @bot.hybrid_command(name="allow", brief="allow certain action", hidden=True)
+# async def Allow(ctx, action : str):
+# 	if not permissionsUtils.command_allowed_in_context(ctx, ctx.command):
+# 		return
 
-	action = action.lower()
+# 	action = action.lower()
 
-	em = discord.Embed(description="", color=getDiscordMainColor())
+# 	em = discord.Embed(description="", color=getDiscordMainColor())
 
-	if action == "space":
-		global pause_command_timeout
-		pause_command_timeout = datetime.datetime.now() + datetime.timedelta(days=0, hours=2)
+# 	if action == "space":
+# 		global pause_command_timeout
+# 		pause_command_timeout = datetime.datetime.now() + datetime.timedelta(days=0, hours=2)
 
-		em.description = f"timeout for !space command set to 2 hours from now"
-		await ctx.send(embed=em)
-		return
+# 		em.description = f"timeout for !space command set to 2 hours from now"
+# 		await ctx.send(embed=em)
+# 		return
 
-	em = discord.Embed(description=f"action {action} not recognized", color=discord.Color.red())
-	await ctx.send(embed=em)
+# 	em = discord.Embed(description=f"action {action} not recognized", color=discord.Color.red())
+# 	await ctx.send(embed=em)
 
-@bot.hybrid_command(name="space", brief="press the space bar", description="allow you to remotely press the space bar")
-async def pressSpace(ctx):
-	global pause_command_timeout
+# @bot.hybrid_command(name="space", brief="press the space bar", description="allow you to remotely press the space bar")
+# async def pressSpace(ctx):
+# 	global pause_command_timeout
 
-	if datetime.datetime.now() > pause_command_timeout:
-		em = discord.Embed(description="permission for !space command not granted", color=discord.Color.red())
-		await ctx.send(embed=em)
-		return
+# 	if datetime.datetime.now() > pause_command_timeout:
+# 		em = discord.Embed(description="permission for !space command not granted", color=discord.Color.red())
+# 		await ctx.send(embed=em)
+# 		return
 	
-	em = discord.Embed(description="pressing space...", color=getDiscordMainColor())
-	await ctx.send(embed=em)
-	keyboard.press_and_release("space")
+# 	em = discord.Embed(description="pressing space...", color=getDiscordMainColor())
+# 	await ctx.send(embed=em)
+# 	keyboard.press_and_release("space")
 
 @bot.tree.command(name="help")
 async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : str = None):
