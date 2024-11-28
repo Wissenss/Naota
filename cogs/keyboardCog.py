@@ -67,6 +67,6 @@ class KeyboardCog(CustomCog):
 
   @commands.hybrid_command(brief="press space", description="press the spacebar")
   async def space(self, ctx : commands.Context):
-    subprocess.run("python C:\\Users\\Leo\\Dev\\Naota\\cli.py space", process_group=1)
+    subprocess.Popen("python C:\\Users\\Leo\\Dev\\Naota\\cli.py space", start_new_session=True)
 
     #run_program_in_session(1, "python C:\\Users\\Leo\\Dev\\Naota\\cli.py space")
