@@ -16,7 +16,7 @@ from googleapiclient.discovery import build
 
 from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
 from utils.variousUtils import getDiscordMainColor
-from utils import permissionsUtils
+from utils import permissionsUtils, achivementsUtils
 
 import connectionPool as connection
 
@@ -66,8 +66,6 @@ class AudioPlaylist:
     self.items : list[AudioPlaylistItem] = []
 
   def __init__(self, index : int, owner_user_id : int):
-    print("constructor 2 called")
-
     try:
       # get rowid out of the order by rowid base index
       conn = connection.get_connection()
@@ -96,7 +94,7 @@ class AudioPlaylist:
       connection.release_connection(conn)
 
   def load_data_from_row_id(self, row_id):
-    print("load_data_from_row_id called")
+    LOGGER.log(logging.DEBUG, "load_data_from_row_id called")
     # get the playlist info
     conn = connection.get_connection()
     cursor =  conn.cursor()
@@ -616,7 +614,14 @@ class MusicPlayer(commands.Cog):
       em.description += " (live)"
 
     await msg.edit(embed=em)
-    return
+    
+    # Cumbias achivement
+    await achivementsUtils.observe_achivement(3, ctx)
+
+    # The end achivement
+    if ctx.message.created_at.month == 12:
+      if achivementsUtils.is_matching_title(audio.title, ["Komm", "Süsser", "Tod", "Susser"], 3):
+        await achivementsUtils.observe_achivement(5, ctx)
 
   @commands.hybrid_group(brief="play some music", description="stream the given <url> audio to voice channel. The <url> has to be a valid youtube link")
   async def play(self, ctx : commands.Context, url : str):

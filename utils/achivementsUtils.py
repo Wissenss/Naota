@@ -22,6 +22,15 @@ def create_progress_bar(progress):
 
   return image
 
+def is_matching_title(title : str, keywords : list[str], minimum_match : int):
+  matches = 0
+
+  for keyword in keywords:
+    if keyword.lower() in title.lower():
+      matches += 1
+
+  return matches >= minimum_match
+
 # this function will progress the achivement if not completed 
 # the specific logic to grant or not the achivement is delegated to the caller code of the utility
 async def observe_achivement(achivement_id : id, ctx : commands.Context):

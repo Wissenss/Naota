@@ -63,7 +63,7 @@ class AchivementCog (CustomCog):
       # send the embed
       em = discord.Embed(color=getDiscordMainColor())
 
-      em.set_author(name=f"{ctx.author.display_name} progress", icon_url=ctx.author.display_avatar)
+      em.set_author(name=f"{ctx.author.display_name} progress: {(progress * 100) :.2f}%", icon_url=ctx.author.display_avatar)
 
       em.set_image(url="attachment://progress.png")
 
@@ -103,6 +103,8 @@ class AchivementCog (CustomCog):
         em.description += f"{a_id} - {a_name}"
 
         em.description += "~~" if completed else ""
+
+      em.description += "\n\nCompleting all achivements grants access to the host computer keyboard. Type `!help keyboard` for more."
           
       # send the list
       await ctx.send(embed=em)

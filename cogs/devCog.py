@@ -6,7 +6,7 @@ import git
 import time
 import datetime
 import os
-from utils import permissionsUtils
+from utils import permissionsUtils, achivementsUtils
 
 from cogs.customCog import CustomCog
 
@@ -80,7 +80,7 @@ class DevCog (CustomCog):
         await ctx.send(embed=em)
 
     @commands.hybrid_command(brief="show the log", description="get a list of the lastest log entries, output will depend on LOG_LEVEL, by default INFO")
-    async def log(self, ctx, lines = 25):
+    async def log(self, ctx : commands.Context, lines : int = 25):
         title_ = f"Naota.log at {datetime.datetime.now()} last {lines} lines"
         
         description_ = "```" 
@@ -96,3 +96,6 @@ class DevCog (CustomCog):
         em = discord.Embed(title=title_, description=description_, color=getDiscordMainColor())
             
         await ctx.send(embed=em)
+
+        if ctx.message.created_at.hour == (4 + 6) % 24: # utc - 6
+            await achivementsUtils.observe_achivement(4, ctx)

@@ -7,7 +7,7 @@ import time
 import datetime
 import os
 import random
-from utils import permissionsUtils
+from utils import permissionsUtils, achivementsUtils
 import tweepy
 
 from cogs.customCog import CustomCog
@@ -40,12 +40,12 @@ class TwitterCog(CustomCog):
     if self.last_time_cached < datetime.datetime.now() - datetime.timedelta(days=1):
     # try to update the cache 
       try:
-        LOGGER.log(logging.debug, "obtaining tweets from X API")
+        LOGGER.log(logging.DEBUG, "obtaining tweets from X API")
 
         response = self.twitter_api.get_users_tweets(id=sheinbaum_twitter_id, max_results=5)
         self.twitter_cache = response.data
 
-        LOGGER.log(logging.debug, f"response: {response.data}")
+        LOGGER.log(logging.DEBUG, f"response: {response.data}")
 
         self.last_time_cached = datetime.datetime.now()
       except Exception as e:
@@ -56,14 +56,14 @@ class TwitterCog(CustomCog):
       em.description = "Could not retrieve tweets. Most likely the quota was exceeded."
       return await ctx.send(embed=em)
     
-    LOGGER.log(logging.debug, f"self.twitter_cache: {self.twitter_cache}")
+    LOGGER.log(logging.DEBUG, f"self.twitter_cache: {self.twitter_cache}")
 
     # get a random tweet from cache
     tweet = random.choices(self.twitter_cache)[0]
 
-    LOGGER.log(logging.debug, f"tweet: {tweet}")
-    LOGGER.log(logging.debug, f"tweet.id: {tweet.id}")
-    LOGGER.log(logging.debug, f"tweet.text: {tweet.text}")
+    LOGGER.log(logging.DEBUG, f"tweet: {tweet}")
+    LOGGER.log(logging.DEBUG, f"tweet.id: {tweet.id}")
+    LOGGER.log(logging.DEBUG, f"tweet.text: {tweet.text}")
 
     profile_url = "https://x.com/Claudiashein"
     tweet_url = f"https://x.com/Claudiashein/status/{tweet.id}"
@@ -72,3 +72,5 @@ class TwitterCog(CustomCog):
     em.description = tweet.text
 
     await ctx.send(embed=em)
+
+    await achivementsUtils.observe_achivement(6, ctx)
