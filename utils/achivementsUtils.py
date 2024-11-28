@@ -66,7 +66,7 @@ async def observe_achivement(achivement_id : id, ctx : commands.Context):
 
     LOGGER.log(logging.INFO, f"achivement completed! (achivement_name: {a_name}) (user_name: {ctx.author.display_name})")
 
-    em = discord.Embed(description=f"achivement **{a_name}** completed by **{ctx.author.display_name}**", color=variousUtils.getDiscordMainColor())
+    em = discord.Embed(description=f":trophy: achivement **{a_name}** completed by **{ctx.author.display_name}**", color=variousUtils.getDiscordMainColor())
 
     await ctx.send(embed=em)
 

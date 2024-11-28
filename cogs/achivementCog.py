@@ -105,6 +105,8 @@ class AchivementCog (CustomCog):
         em.description += "~~" if completed else ""
 
       em.description += "\n\nCompleting all achivements grants access to the host computer keyboard. Type `!help keyboard` for more."
+
+      em.description += "\n\nType `!help <achivement_id>` for hints on how to obtain an achivement."
           
       # send the list
       await ctx.send(embed=em)

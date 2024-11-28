@@ -238,6 +238,7 @@ class ChessCog(CustomCog):
 
         ctx = await self.bot.get_context(interaction)
 
+        # Ain't that Levy achivement
         await achivementsUtils.observe_achivement(2, ctx)
 
     @app_commands.command(name="ranking", description="get the global ranking")
