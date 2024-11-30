@@ -14,7 +14,7 @@
   "servers" : {
     "638943159581147137" : {
       "alias" : "kuva clan",
-      "permissions" : ["Cog_Watchlist", "Cog_Dev", "Cog_Chess", "Cog_MusicPlayer", "Cog_Twitter", "Cog_CompetitiveProgramming",  "Cog_Achivement", "Cog_Keyboard"]
+      "permissions" : ["Cog_MusicPlayer", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming",  "Cog_Achivement", "Cog_Keyboard"]
     },
     "821940114648334416" : {
       "alias" : "butthole lovers",
@@ -22,7 +22,7 @@
     },
     "1178465444701687878" : {
       "alias" : "naota dev",
-      "permissions" : ["Cog_MusicPlayer", "Cog_Watchlist", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming", "Cog_Achivement", "Cog_Keyboard"]
+      "permissions" : ["Cog_MusicPlayer", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming", "Cog_Achivement", "Cog_Keyboard"]
     }
   },
   "groups" : {

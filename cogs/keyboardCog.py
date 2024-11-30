@@ -56,7 +56,7 @@ class KeyboardCog(CustomCog):
       
     return True
 
-  @commands.hybrid_command(brief="press and release the given key", description="press and release one of the following keys: space, down, up, left, right, [a-z], [0-9]")
+  @commands.hybrid_command(brief="press and release the given key", description="press and release one of the following keys: space, down, up, left, right, [a-z], [0-9], click")
   async def press(self, ctx : commands.Context, key):
     # check if the given key is allowed
     allowed_keys = [
