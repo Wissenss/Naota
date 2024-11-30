@@ -31,9 +31,13 @@ standard-imghdr
 # codeforces API
 CodeforcesApiPy
 
+# pc control
+keyboard
+mouse
+pyautogui
+
 # other
 urllib3
 july
 audioop-lts
-keyboard
 pillow
