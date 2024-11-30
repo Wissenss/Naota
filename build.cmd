@@ -1,2 +1,2 @@
 git pull
-pyinstaller -F main.py
+pyinstaller -F main.pyw --name=naota
