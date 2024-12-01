@@ -1,4 +1,5 @@
 import io
+import datetime
 import discord
 from discord.ext import commands
 from settings import *
@@ -13,6 +14,7 @@ import connectionPool
 
 import math
 
+
 from PIL import Image
 import keyboard
 import mouse
@@ -24,9 +26,15 @@ class KeyboardCog(CustomCog):
 
     self.__cog_name__ = "Keyboard"
 
+    self.timeout = datetime.datetime.now()
+
   async def cog_check(self, ctx: commands.Context):
     if await super().cog_check(ctx) == False:
       return False
+
+    # allow the usage if timeout is valid
+    if datetime.datetime.now() < self.timeout:
+      return True
 
     # get the connection
     conn = connectionPool.get_connection()
@@ -114,3 +122,11 @@ class KeyboardCog(CustomCog):
     await ctx.send(file=file, embed=em)
 
     byte_shot.close()
+
+  @commands.hybrid_command(brief="allow control", hiden=True)
+  async def allowkeyboard(self, ctx : commands.Context):
+    self.timeout = datetime.datetime.now() + datetime.timedelta(seconds=2*60*60)
+
+    em = discord.Embed(description="access to **keyboard** commands is available for the next two hours", color=getDiscordMainColor())
+
+    await ctx.send(embed=em)
