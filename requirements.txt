@@ -35,6 +35,7 @@ CodeforcesApiPy
 keyboard
 mouse
 pyautogui
+pywin32
 
 # other
 urllib3

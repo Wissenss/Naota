@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw
 
 import connectionPool
 from settings import *
