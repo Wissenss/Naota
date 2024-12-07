@@ -11,6 +11,9 @@ from cogs.customCog import CustomCog
 from multiprocessing.connection import Client
 
 import connectionPool
+import win32ui
+import win32gui
+import ctypes
 
 from PIL import Image, ImageDraw
 import keyboard
@@ -117,21 +120,56 @@ class KeyboardCog(CustomCog):
 
     await ctx.send(embed=em)
 
+  def get_cursor(self):
+    hcursor = win32gui.GetCursorInfo()[1]
+    hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
+    hbmp = win32ui.CreateBitmap()
+    hbmp.CreateCompatibleBitmap(hdc, 36, 36)
+    hdc = hdc.CreateCompatibleDC()
+    hdc.SelectObject(hbmp)
+    hdc.DrawIcon((0,0), hcursor)
+    
+    bmpinfo = hbmp.GetInfo()
+    bmpstr = hbmp.GetBitmapBits(True)
+    cursor = Image.frombuffer('RGB', (bmpinfo['bmWidth'], bmpinfo['bmHeight']), bmpstr, 'raw', 'BGRX', 0, 1).convert("RGBA")
+    
+    win32gui.DestroyIcon(hcursor)    
+    win32gui.DeleteObject(hbmp.GetHandle())
+    hdc.DeleteDC()
+
+    pixdata = cursor.load()
+
+    width, height = cursor.size
+    for y in range(height):
+        for x in range(width):
+
+            if pixdata[x, y] == (0, 0, 0, 255):
+                pixdata[x, y] = (0, 0, 0, 0)
+
+    hotspot = win32gui.GetIconInfo(hcursor)[1:3]
+
+    return (cursor, hotspot)
+
   @commands.hybrid_command(brief="show the screen", description="take and show a screen shot of the host system.")
-  async def screenshot(selc, ctx : commands.Context, show_cursor : bool = True):
+  async def screenshot(self, ctx : commands.Context, show_cursor : bool = True):
     em = discord.Embed(color=getDiscordMainColor())
 
     shot = pyautogui.screenshot()
 
     # draw the cursor
     if show_cursor:
-      #shot.paste()
+      cursor, (hotspotx, hotspoty) = self.get_cursor()
 
-      draw = ImageDraw.Draw(shot)
+      ratio = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 
-      x, y = pyautogui.position()
+      pos_win = win32gui.GetCursorPos()
+      pos = (round(pos_win[0]*ratio - hotspotx), round(pos_win[1]*ratio - hotspoty))
 
-      draw.ellipse((x-7, y-7, x+7, y+7), fill='red')
+      shot.paste(cursor, pos, cursor)
+ 
+      # draw = ImageDraw.Draw(shot)
+      # x, y = pyautogui.position()
+      # draw.ellipse((x-7, y-7, x+7, y+7), fill='red')
 
     byte_shot = io.BytesIO()
 
