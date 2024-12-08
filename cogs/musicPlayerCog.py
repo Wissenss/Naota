@@ -328,7 +328,7 @@ class AudioQueue:
 
     resource.original_url = url
 
-    self.__queue.append_resource(resource)
+    self.append_resource(resource)
 
   def pop(self, index : int = 0, deleteFile : bool = True):
     resource = self.__queue[index]
@@ -701,13 +701,27 @@ class MusicPlayer(commands.Cog):
 
     await ctx.send(embed=em)
 
-    for row in rows:
+    audio_stream = AudioStreamsHandler.get_stream(ctx.guild.id, self.bot)
+
+    # try to play the first song right away
+    url = rows[0][1]
+    await self.__play_url(ctx, url, True)
+    await asyncio.sleep(5)
+
+    for i, row in enumerate(rows):
+      if i == 0: continue
+      
       item_id = row[0]
       url = row[1]
       title = row[2]
       youtube_id = row[3]
-      
-      await self.__play_url(ctx, url, True)
+
+      try:
+        audio_stream.queue.append(url)
+      except Exception as e:
+        LOGGER.log(logging.ERROR, f"cannot append {item_id}: {url} to playlist, probably invalid link!")
+        LOGGER.log(logging.ERROR, f"exception: {repr(e)}")
+        continue
 
     # release the connection
     connectionPool.release_connection(conn)
@@ -936,7 +950,7 @@ class MusicPlayer(commands.Cog):
     em = discord.Embed(color=getDiscordMainColor())
 
     try:
-      conn = connection.get_connection()
+      conn = connectionPool.get_connection()
       cursor =  conn.cursor()
 
       # get the playlist
@@ -982,7 +996,7 @@ class MusicPlayer(commands.Cog):
       LOGGER.log(logging.ERROR, f"Exception on playlist_create command:\n{repr(e)}")
 
     finally:
-      connection.release_connection(conn)
+      connectionPool.release_connection(conn)
 
   playlist.command()
   async def playlist_remove(self, ctx : commands.Context, playlist_index : int, item_index : int):
