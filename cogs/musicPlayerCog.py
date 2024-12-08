@@ -683,7 +683,7 @@ class MusicPlayer(commands.Cog):
       playlist_id = playlistsUtils.get_default_playlist_id(ctx.guild)
 
     # append all songs to the stream
-    sql = "SELECT * FROM playlist_items WHERE playlist_id = ?;"
+    sql = "SELECT * FROM playlist_items WHERE playlist_id = ? ORDER BY playlist_item_id DESC;"
 
     curs.execute(sql, [playlist_id])
 
