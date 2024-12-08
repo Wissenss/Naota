@@ -11,6 +11,7 @@ import logging
 from settings import *
 
 from utils.variousUtils import getDiscordMainColor
+from utils import playlistsUtils
 
 import keyboard
 import datetime
@@ -45,7 +46,7 @@ async def setup_hook():
 
 	LOGGER.log(logging.INFO, "loading cogs...")
 	await bot.add_cog(MusicPlayer(bot))
-	await bot.add_cog(WatchlistCog(bot))
+	#await bot.add_cog(WatchlistCog(bot))
 	await bot.add_cog(DevCog(bot))
 	await bot.add_cog(ChessCog(bot))
 	await bot.add_cog(TwitterCog(bot))
@@ -62,47 +63,38 @@ async def setup_hook():
 	LOGGER.log(logging.INFO, "all set up!")
 	LOGGER.log(logging.INFO, "--------------------------------------------------------------------")
 
+@bot.event
+async def on_message(message : discord.Message):
+	# { guild_id : music_channel_id } key value pairs
+	music_channel_id = playlistsUtils.get_guild_music_channel_id(message.guild)
+
+	print(f"music_channel_id: {music_channel_id}")
+
+	if message.channel.id == music_channel_id:
+		conn = connectionPool.get_connection()
+		curs = conn.cursor()
+
+		url = playlistsUtils.get_youtube_url_from_message(message)
+
+		if not url:
+			return
+
+		LOGGER.log(logging.DEBUG, f"apending url: {url} to default playlist for guild: {message.guild.id}")
+
+		default_playlist_id = playlistsUtils.get_default_playlist_id(message.guild)
+
+		sql = "INSERT INTO playlist_items(url, playlist_id) VALUES(?, ?);"
+
+		curs.execute(sql, [url, default_playlist_id])
+
+		conn.commit()
+
+		connectionPool.release_connection(conn)
+
 # @bot.hybrid_command(name="about", hidden=True)
 # async def About(ctx):
 # 	em = discord.Embed(title="", description="", color=getDiscordMainColor())
-
-
-
 # 	await ctx.send(embed=em)
-
-# must check how to raise key presses on main session
-# @bot.hybrid_command(name="allow", brief="allow certain action", hidden=True)
-# async def Allow(ctx, action : str):
-# 	if not permissionsUtils.command_allowed_in_context(ctx, ctx.command):
-# 		return
-
-# 	action = action.lower()
-
-# 	em = discord.Embed(description="", color=getDiscordMainColor())
-
-# 	if action == "space":
-# 		global pause_command_timeout
-# 		pause_command_timeout = datetime.datetime.now() + datetime.timedelta(days=0, hours=2)
-
-# 		em.description = f"timeout for !space command set to 2 hours from now"
-# 		await ctx.send(embed=em)
-# 		return
-
-# 	em = discord.Embed(description=f"action {action} not recognized", color=discord.Color.red())
-# 	await ctx.send(embed=em)
-
-# @bot.hybrid_command(name="space", brief="press the space bar", description="allow you to remotely press the space bar")
-# async def pressSpace(ctx):
-# 	global pause_command_timeout
-
-# 	if datetime.datetime.now() > pause_command_timeout:
-# 		em = discord.Embed(description="permission for !space command not granted", color=discord.Color.red())
-# 		await ctx.send(embed=em)
-# 		return
-	
-# 	em = discord.Embed(description="pressing space...", color=getDiscordMainColor())
-# 	await ctx.send(embed=em)
-# 	keyboard.press_and_release("space")
 
 @bot.tree.command(name="help")
 async def CustomHelpSlashCommand(interaction : discord.Interaction, resource : str = None):

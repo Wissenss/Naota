@@ -16,36 +16,36 @@ from googleapiclient.discovery import build
 
 from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
 from utils.variousUtils import getDiscordMainColor
-from utils import permissionsUtils, achivementsUtils
+from utils import permissionsUtils, achivementsUtils, playlistsUtils
 
-import connectionPool as connection
+import connectionPool
 
 from sentiment.sentiment_analysis import process_youtube_comments
 
 # this class should not be instantiated from outside the AudioPlaylist items
 class AudioPlaylistItem:
   def __init__(self):
-    self.row_id = -1
+    self.playlist_item_id = -1
     self.original_url : str = ""
     self.title : str = ""
     self.origin_id : int = 0
-    self.playlist_row_id : int = -1
+    self.playlist_id : int = -1
   
-  def __init__(self, row_id : int):
-    conn = connection.get_connection()
+  def __init__(self, playlist_item_id : int):
+    conn = connectionPool.get_connection()
     cursor = conn.cursor()
 
-    sql = "SELECT * FROM playlist_items WHERE rowId = ?;"
+    sql = "SELECT * FROM playlist_items WHERE playlist_item_id = ?;"
 
-    cursor.execute(sql, [row_id])
+    cursor.execute(sql, [playlist_item_id])
 
     item = cursor.fetchone()
 
-    self.row_id = item[0]
+    self.playlist_item_id = item[0]
     self.original_url = item[1]
     self.title = item[2]
     self.origin_id = item[3]
-    self.playlist_row_id = item[4]
+    self.playlist_id = item[4]
 
     cursor.close()
 
@@ -71,7 +71,7 @@ class AudioPlaylist:
       conn = connection.get_connection()
       cursor = conn.cursor()
 
-      sql = "SELECT * FROM playlists WHERE ownerUserId = ? ORDER BY rowId;"
+      sql = "SELECT * FROM playlists WHERE user_id = ? ORDER BY playlist_id;"
       
       cursor.execute(sql, [owner_user_id])
 
@@ -93,26 +93,26 @@ class AudioPlaylist:
     finally:
       connection.release_connection(conn)
 
-  def load_data_from_row_id(self, row_id):
+  def load_data_from_playlist_id(self, playlist_id):
     LOGGER.log(logging.DEBUG, "load_data_from_row_id called")
     # get the playlist info
     conn = connection.get_connection()
     cursor =  conn.cursor()
     
-    sql = "SELECT * FROM playlists WHERE rowId = ?"
+    sql = "SELECT * FROM playlists WHERE playlist_id = ?"
 
-    cursor.execute(sql, [row_id])
+    cursor.execute(sql, [playlist_id])
 
     raw_playlist = cursor.fetchone()
 
-    self.rowId = raw_playlist[0]
+    self.playlist_id = raw_playlist[0]
     self.owner_user_id = raw_playlist[1]
     self.name = raw_playlist[2]
 
     # get the songs of the playlist
-    sql = "SELECT rowId FROM playlist_items WHERE playlistRowId = ?"
+    sql = "SELECT playlist_item_id FROM playlist_items WHERE playlist_id = ?"
 
-    cursor.execute(sql, [self.rowId])
+    cursor.execute(sql, [self.playlist_id])
 
     raw_playlist_items = cursor.fetchall()
 
@@ -137,7 +137,7 @@ class AudioPlaylist:
       conn = connection.get_connection()
       cursor = conn.cursor()
 
-      sql = "INSERT INTO playlist_items(originalUrl, title, originId, playlistRowId) VALUES(?, ?, ?, ?);"
+      sql = "INSERT INTO playlist_items(url, title, youtube_id, playlist_id) VALUES(?, ?, ?, ?);"
 
       cursor.execute(sql, [item.original_url, item.title, item.origin_id, self.rowId])
 
@@ -164,7 +164,7 @@ class AudioPlaylist:
       conn = connection.get_connection()
       cursor = conn.cursor()
       
-      sql = "DELETE FROM playlist_items WHERE rowid = ?;"
+      sql = "DELETE FROM playlist_items WHERE playlist_id = ?;"
 
       cursor.execute(sql, [item.row_id])
 
@@ -528,6 +528,23 @@ class MusicPlayer(commands.Cog):
     self.bot = bot
     self.constant_buffer_purge.start()
 
+    # TODO: scan the music channel guilds
+    # conn = connectionPool.get_connection()
+    # curs = conn.cursor()
+
+    # curs.execute("SELECT * FROM guilds;")
+    # rows = curs.fetchall()
+
+    # for row in rows:
+    #   guild_id = row[0]
+    #   discord_guild_id = row[1]
+    #   music_channel_id = row[2]
+    #   last_music_channel_check = row[3]
+
+      
+
+    # connectionPool.release_connection(conn)
+
   @tasks.loop(minutes=60)
   async def constant_buffer_purge(self):
     AudioBuffer.purge()
@@ -541,7 +558,7 @@ class MusicPlayer(commands.Cog):
   async def cog_after_invoke(self, ctx: commands.Context):
     pass
 
-  async def __play_url(self, ctx : commands.Context, url : str):
+  async def __play_url(self, ctx : commands.Context, url : str, silent : bool = False):
 
     em = discord.Embed(color=getDiscordMainColor())
 
@@ -552,45 +569,48 @@ class MusicPlayer(commands.Cog):
       return
 
     # we respond to interaction so it doesn't times out
-    em.description = f"Quering **[URL]({url})** resources"
-    msg : discord.Message = await ctx.send(embed=em)
+    em.description = f"Quering **[URL]({url})** resources..."
+    if silent == False:
+      msg : discord.Message = await ctx.send(embed=em)
 
     # the url most be a valid youtube link
     try:
       ytdlopts = {
-      'format': 'bestaudio/best',
-      'restrictfilenames': True,
-      'noplaylist': True,
-      'nocheckcertificate': True,
-      'ignoreerrors': False,
-      'logtostderr': False,
-      'quiet': True,
-      "external_downloader_args": ['-loglevel', 'panic'],
-      'no_warnings': True,
-      'default_search': 'auto',
-      'source_address': '0.0.0.0'  # ipv6 addresses cause issues sometimes
-    }
+        'format': 'bestaudio/best',
+        'restrictfilenames': True,
+        'noplaylist': True,
+        'nocheckcertificate': True,
+        'ignoreerrors': False,
+        'logtostderr': False,
+        'quiet': True,
+        "external_downloader_args": ['-loglevel', 'panic'],
+        'no_warnings': True,
+        'default_search': 'auto',
+        'source_address': '0.0.0.0'  # ipv6 addresses cause issues sometimes
+      }
 
       ytdl = yt_dlp.YoutubeDL(ytdlopts)
       data = ytdl.extract_info(url=url, download=False)
       audio = AudioResource()
       audio.load_data(data)
 
-      if LOG_LEVEL == "DEBUG":
-        for d in data: # for debug
-          LOGGER.log(logging.DEBUG, f"{d}: {data[d]}")
+      #if LOG_LEVEL == "DEBUG":
+      for d in data: # for debug
+        LOGGER.log(logging.DEBUG, f"{d}: {data[d]}")
 
     except Exception as e:
-      LOGGER.log(logging.DEBUG, f"{repr(e)}")
+      LOGGER.log(logging.ERROR, f"{repr(e)}")
       em.description = "Invalid url"
-      await msg.edit(embed=em)
+      if silent == False:
+        await msg.edit(embed=em)
       return
 
     # the videos should not be longer than 15 minutes
     if not audio.is_live:
       if audio.duration > datetime.timedelta(hours=0, minutes=15, seconds=0).total_seconds():
         em.description = "Video too long"
-        await msg.edit(embed=em)
+        if silent == False:
+          await msg.edit(embed=em)
         return
 
     voice_channel = ctx.voice_client
@@ -613,7 +633,8 @@ class MusicPlayer(commands.Cog):
     if (audio.is_live == True):
       em.description += " (live)"
 
-    await msg.edit(embed=em)
+    if silent == False:
+      await msg.edit(embed=em)
     
     # Cumbias achivement
     await achivementsUtils.observe_achivement(3, ctx)
@@ -650,6 +671,46 @@ class MusicPlayer(commands.Cog):
     url = f"https://www.youtube.com/watch?v={result["id"]["videoId"]}"
 
     return await self.play_url(ctx, url)
+
+  @play.command(name="playlist", breif="listen to a playlist", description="append the playlist items to the queue")
+  async def play_playlist(self, ctx : commands.Context, playlist_id : int = 0):
+    # create the connection
+    conn = connectionPool.get_connection()
+    curs = conn.cursor()
+
+    # if the playlist_id is 0, use the default playlist id
+    if playlist_id == 0:
+      playlist_id = playlistsUtils.get_default_playlist_id(ctx.guild)
+
+    # append all songs to the stream
+    sql = "SELECT * FROM playlist_items WHERE playlist_id = ?;"
+
+    curs.execute(sql, [playlist_id])
+
+    rows = curs.fetchall()
+
+    em = discord.Embed(title="", color=getDiscordMainColor())
+
+    # TODO: fix this validation
+    if not rows:
+      em.description = f"playlist #{playlist_id} is empty"
+
+      return await ctx.send(embed=em)
+
+    em.description=f"appending all songs from playlist #{playlist_id}"
+
+    await ctx.send(embed=em)
+
+    for row in rows:
+      item_id = row[0]
+      url = row[1]
+      title = row[2]
+      youtube_id = row[3]
+      
+      await self.__play_url(ctx, url, True)
+
+    # release the connection
+    connectionPool.release_connection(conn)
 
   @commands.hybrid_command(brief="know what you'r listening to", description="get the current streamed resource information")
   async def playing(self, ctx : commands.Context):
