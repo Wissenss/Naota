@@ -29,27 +29,27 @@ class AchivementCog (CustomCog):
       # get the total count of achivements
       curs.execute("SELECT COUNT(*) FROM achivements;")
 
-      no_achivements = curs.fetchone()[0]
+      no_achievements = curs.fetchone()[0]
 
-      LOGGER.log(logging.DEBUG, f"the total number of achivements is {no_achivements}")
+      LOGGER.log(logging.DEBUG, f"the total number of achievements is {no_achievements}")
 
       # obtain the completed achivements
       sql = "SELECT * FROM achivements_users WHERE user_id = (SELECT user_id FROM users WHERE discord_user_id = ?);"
 
       curs.execute(sql, [ctx.author.id])
 
-      completed_achivements = 0
+      completed_achievements = 0
 
       for row in curs.fetchall():
-        completed_achivements += row[3]
+        completed_achievements += row[3]
 
-      LOGGER.log(logging.DEBUG, f"the number of completed achivements is {completed_achivements}")
+      LOGGER.log(logging.DEBUG, f"the number of completed achivements is {completed_achievements}")
 
       # release the connection
       connectionPool.release_connection(conn)
 
       # calculate how much progress a user have 
-      progress = completed_achivements / no_achivements
+      progress = completed_achievements / no_achievements
 
       # create the progress bar
       image_progress = io.BytesIO()
