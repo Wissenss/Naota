@@ -7,7 +7,7 @@ import time
 import datetime
 import os
 import random
-from utils import permissionsUtils, achivementsUtils
+from utils import permissionsUtils, achievementsUtils
 import tweepy
 
 from cogs.customCog import CustomCog
@@ -73,4 +73,4 @@ class TwitterCog(CustomCog):
 
     await ctx.send(embed=em)
 
-    await achivementsUtils.observe_achivement(6, ctx)
+    await achievementsUtils.observe_achievement(6, ctx)

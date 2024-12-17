@@ -33,7 +33,7 @@ def is_matching_title(title : str, keywords : list[str], minimum_match : int):
 
 # this function will progress the achivement if not completed 
 # the specific logic to grant or not the achivement is delegated to the caller code of the utility
-async def observe_achivement(achivement_id : id, ctx : commands.Context):
+async def observe_achievement(achivement_id : id, ctx : commands.Context):
   if not permissionsUtils.permission_allowed_in_context(ctx=ctx, permission="Cog_Achivement"):
     return
 

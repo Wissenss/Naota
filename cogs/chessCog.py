@@ -17,7 +17,7 @@ from cogs.customCog import CustomCog
 
 from settings import LOGGER
 from utils.variousUtils import getDiscordMainColor
-from utils import achivementsUtils
+from utils import achievementsUtils
 
 PUZZLE_STATUS_UNSOLVED = 0
 PUZZLE_STATUS_SOLVED = 1
@@ -239,7 +239,7 @@ class ChessCog(CustomCog):
         ctx = await self.bot.get_context(interaction)
 
         # Ain't that Levy achivement
-        await achivementsUtils.observe_achivement(2, ctx)
+        await achievementsUtils.observe_achievement(2, ctx)
 
     @app_commands.command(name="ranking", description="get the global ranking")
     async def ranking(self, interaction : discord.Interaction):

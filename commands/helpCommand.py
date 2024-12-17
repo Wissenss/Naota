@@ -9,8 +9,8 @@ from utils.variousUtils import getDiscordMainColor
 from utils import permissionsUtils
 
 """ 
-I create this helper functions to centralize the help message creation. This are then called from
-both the CustomHelpCommand class and the CustomHelpSlashCommand. Not too elegent but good enough for now  
+This helper functions centralize the help message creation. This are then called from both the 
+CustomHelpCommand class and the CustomHelpSlashCommand. Not too elegent but good enough for now  
 """
 
 def get_help_embed(ctx : commands.Context, mapping):

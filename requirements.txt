@@ -37,6 +37,9 @@ mouse
 pyautogui
 pywin32
 
+# deployment
+pyinstaller
+
 # other
 urllib3
 july

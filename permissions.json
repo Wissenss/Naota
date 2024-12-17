@@ -2,35 +2,43 @@
   "users" : {
     "334016584093794305" : {
       "alias" : "wissens",
-      "permissions" : ["Command_sync", "Command_allowkeyboard", "Command_denykeyboard"],
+      "permissions" : ["Command_allowkeyboard", "Command_denykeyboard"],
       "groups" : ["default", "dev"]
     }, 
     "334150375051493377" : {
       "alias" : "cholulenz",
       "permissions" : [],
-      "groups" : ["default"]
+      "groups" : ["default", "dev"]
     }
   },
   "servers" : {
     "638943159581147137" : {
       "alias" : "kuva clan",
-      "permissions" : ["Cog_MusicPlayer", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming",  "Cog_Achivement", "Cog_Keyboard"]
+      "groups" : ["default"],
+      "permissions" : ["Cog_Keyboard"]
     },
     "821940114648334416" : {
       "alias" : "butthole lovers",
-      "permissions" : ["Cog_Dev", "Cog_Chess", "Cog_MusicPlayer"]
+      "groups" : ["default"],
+      "permissions" : ["Cog_Keyboard"]
+    },
+    "868606906707640330" : {
+      "alias" : "Abyss of ICI",
+      "groups" : ["default"],
+      "permissions" : []
     },
     "1178465444701687878" : {
       "alias" : "naota dev",
-      "permissions" : ["Cog_MusicPlayer", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_CompetitiveProgramming", "Cog_Achivement", "Cog_Keyboard"]
+      "groups" : ["default"],
+      "permissions" : ["Cog_Keyboard", "Cog_CompetitiveProgramming"]
     }
   },
   "groups" : {
     "dev" : {
-      "permissions" : []
+      "permissions" : ["Command_sync"]
     },
     "default" : {
-      "permissions" : []
+      "permissions" : ["Cog_MusicPlayer", "Cog_Dev", "Cog_Chess", "Cog_Twitter", "Cog_Achievement"]
     }
   }
 }

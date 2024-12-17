@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from settings import *
 from utils.variousUtils import getDiscordMainColor
-from utils import permissionsUtils, achivementsUtils
+from utils import permissionsUtils, achievementsUtils
 
 from cogs.customCog import CustomCog
 
@@ -185,7 +185,7 @@ class KeyboardCog(CustomCog):
 
     byte_shot.close()
 
-  @commands.hybrid_command(brief="allow control", description="allow keyboard commands to all users", hiden=True)
+  @commands.hybrid_command(brief="allow control", description="allow keyboard commands to all users", hidden=True)
   async def allowkeyboard(self, ctx : commands.Context, minutes : int = 120):
     if not permissionsUtils.command_allowed_in_context(ctx, ctx.command):
       return await self.on_command_permission_denied(ctx)
@@ -196,7 +196,7 @@ class KeyboardCog(CustomCog):
 
     await ctx.send(embed=em)
 
-  @commands.hybrid_command(brief="deny control", description="deny keyboard commands to all users", hiden=True)
+  @commands.hybrid_command(brief="deny control", description="deny keyboard commands to all users", hidden=True)
   async def denykeyboard(self, ctx : commands.Context, minutes : int = 120):
     if not permissionsUtils.command_allowed_in_context(ctx, ctx.command):
       return await self.on_cog_permission_denied(ctx)

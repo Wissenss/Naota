@@ -14,6 +14,8 @@ Naota has the following Cogs:
 - **Chess:** commands to solve chess puzzles - thanks to lichess for providing the [puzzle dataset](https://database.lichess.org/#puzzles)
 - **Twitter:** commands to interact with the x/twitter API.
 
+The `!help` command privides a detail explanation of how to use them. 
+
 ## For developers
 Naota is built on top of [discord.py](https://discordpy.readthedocs.io/en/stable/) and the following APIs:
 
@@ -39,7 +41,7 @@ git clone https://github.com/Wissenss/Naota.git
 ```
 pip install -r requirements.txt
 ```
-3. Create a new .env file inside the project folder and set it up as follows
+3. Create a new `.env` file inside the project folder and set it up as follows
 ```env
 DISCORD_TOKEN="YOUR DISCORD TOKEN"
 YOUTUBE_TOKEN="YOUR YOUTUBE API TOKEN"
@@ -61,7 +63,7 @@ PERMISSIONS_FILE_PATH="./permissions.json"
 ```
 `YOUTUBE_TOKEN` and `CODEFORCES_TOKEN` are not actively being used, so asigning the to empty strings will probably be fine for now.
 
-4. (Optional) Modify [the permissions.json]() file.
+4. (Optional) Modify [the permissions.json](#the-permissions-json) file.
 
 ## The permissions JSON
 Use it to allow per server or per user behaviour. The following permissions are available:
@@ -75,6 +77,8 @@ Use it to allow per server or per user behaviour. The following permissions are 
 
 #### For individual commands:
 - Command_Sync
+- Command_AllowKeyboard
+- Command_DenyKeyboard
 
 To determine if a certain action is allowed, it must be included in either
 the user permissions, the permissions of a group the user belongs to or the server

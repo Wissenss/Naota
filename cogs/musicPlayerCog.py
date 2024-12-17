@@ -16,7 +16,7 @@ from googleapiclient.discovery import build
 
 from settings import LOGGER, LOG_LEVEL, YOUTUBE_TOKEN
 from utils.variousUtils import getDiscordMainColor
-from utils import permissionsUtils, achivementsUtils, playlistsUtils
+from utils import permissionsUtils, achievementsUtils, playlistsUtils
 
 import connectionPool
 
@@ -637,12 +637,12 @@ class MusicPlayer(commands.Cog):
       await msg.edit(embed=em)
     
     # Cumbias achivement
-    await achivementsUtils.observe_achivement(3, ctx)
+    await achivementsUtils.observe_achievement(3, ctx)
 
     # The end achivement
     if ctx.message.created_at.month == 12:
       if achivementsUtils.is_matching_title(audio.title, ["Komm", "Süsser", "Tod", "Susser"], 3):
-        await achivementsUtils.observe_achivement(5, ctx)
+        await achivementsUtils.observe_achevement(5, ctx)
 
   @commands.hybrid_group(brief="play some music", description="stream the given <url> audio to voice channel. The <url> has to be a valid youtube link")
   async def play(self, ctx : commands.Context, url : str):

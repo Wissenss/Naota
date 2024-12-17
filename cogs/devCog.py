@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
 from settings import *
-from utils.variousUtils import getDiscordMainColor
+from utils.variousUtils import getDiscordMainColor, size_bytes_to_string
 import git
 import time
 import datetime
 import os
-from utils import permissionsUtils, achivementsUtils
+from utils import permissionsUtils, achievementsUtils
 
 from cogs.customCog import CustomCog
 
@@ -27,7 +27,10 @@ class DevCog (CustomCog):
         
         # obtain the buffer size
         count, size = AudioBuffer.get_size()
-        em.description += f"\n**buffer size:** {count} files, {size} bytes"
+        if count == 0:
+            em.description += f"\n**buffer:** no files"
+        else:
+            em.description += f"\n**buffer:** {count} {'files' if count > 1 else 'file'}, {size_bytes_to_string(size)}"
 
         # get the uptime
         up_time = datetime.datetime.now() - self.start_time
@@ -36,7 +39,11 @@ class DevCog (CustomCog):
         minutes = (seconds % 3600) // 60
         seconds = seconds % 60
 
-        em.description += f"\n**up time:** {days}d {hours}h {minutes}m {seconds}s"
+        em.description += f"\n**up time:**"
+        em.description += f" {days}d" if days > 0 else ""
+        em.description += f" {hours}h" if hours > 0 else ""
+        em.description += f" {minutes}m" if minutes > 0 else ""
+        em.description += f" {seconds}s" if seconds > 0 else ""
 
         await ctx.send(embed=em)
 
@@ -98,4 +105,4 @@ class DevCog (CustomCog):
         await ctx.send(embed=em)
 
         if ctx.message.created_at.hour == (4 + 6) % 24: # utc - 6
-            await achivementsUtils.observe_achivement(4, ctx)
+            await achievementsUtils.observe_achievement(4, ctx)
