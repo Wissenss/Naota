@@ -636,13 +636,13 @@ class MusicPlayer(commands.Cog):
     if silent == False:
       await msg.edit(embed=em)
     
-    # Cumbias achivement
-    await achivementsUtils.observe_achievement(3, ctx)
+    # Cumbias achievement
+    await achievementsUtils.observe_achievement(3, ctx)
 
-    # The end achivement
+    # The end achievement
     if ctx.message.created_at.month == 12:
-      if achivementsUtils.is_matching_title(audio.title, ["Komm", "Süsser", "Tod", "Susser"], 3):
-        await achivementsUtils.observe_achevement(5, ctx)
+      if achievementsUtils.is_matching_title(audio.title, ["Komm", "Süsser", "Tod", "Susser"], 3):
+        await achievementsUtils.observe_achevement(5, ctx)
 
   @commands.hybrid_group(brief="play some music", description="stream the given <url> audio to voice channel. The <url> has to be a valid youtube link")
   async def play(self, ctx : commands.Context, url : str):

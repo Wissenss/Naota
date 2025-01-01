@@ -2,17 +2,16 @@ __pycache__/
 
 .env
 *.mp3
+*.spec
 
 /buffer
 /release
 /bin
 /lib
-lib64
+/lib64
 /share
 /dist
 /build
-
-main.spec
 
 pyvenv.cfg
 
@@ -23,3 +22,6 @@ default.txt
 
 *.db
 *.csv
+
+cairo.dll
+ffmpeg.exe

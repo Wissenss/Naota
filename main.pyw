@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from typing import Any, Dict, List, Optional
+import random
 import discord
 from discord.ext import commands
 
@@ -13,7 +14,6 @@ from settings import *
 from utils.variousUtils import getDiscordMainColor
 from utils import playlistsUtils
 
-import keyboard
 import datetime
 
 ############ cogs ############
@@ -90,6 +90,66 @@ async def on_message(message : discord.Message):
 		conn.commit()
 
 		connectionPool.release_connection(conn)
+
+	# then process all other commands
+	await bot.process_commands(message)
+
+@bot.hybrid_command(brief="create a poll", description="create a poll specifying <title> <option n> <option n + 1>...")
+async def poll(ctx : commands.context, title : str, option_1 = "", option_2 = "", option_3 = "", option_4 = "", option_5 = "", option_6 = "", option_7 = "", option_8 = "", option_9 = "", option_10 = ""):
+	LOGGER.log(logging.INFO, f"{ctx.command.qualified_name} called (USER ID {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
+
+  # fugly hack because slash commands don't support *args parameters
+  # ----------------------------------------------------------------
+	options = []
+
+	if option_1 : options.append(option_1)
+	if option_2 : options.append(option_2)
+	if option_3 : options.append(option_3)
+	if option_4 : options.append(option_3)
+	if option_5 : options.append(option_3)
+	if option_6 : options.append(option_3)
+	if option_7 : options.append(option_3)
+	if option_8 : options.append(option_3)
+	if option_9 : options.append(option_3)
+	if option_10 : options.append(option_3)
+  # ----------------------------------------------------------------
+
+	reactions = ["🍎", "🍊","🍇", "🥑", "🍞", "🧅", "🥚", "🌶️", "🥦", "🧀", "🥓", "🍓", "🫐", "🍿", "🍪", "🍭", "🍬"]
+
+	em = discord.Embed(title=title, color=getDiscordMainColor())
+
+	# maybe set the author to the one that send the message?
+  # if utils.otherUtils.isAdmin(ctx) and is_official_poll:
+  #   em.set_author(name="by Rooster Games")
+
+	if len(options) == 0:
+		message = await ctx.send(embed=em)
+		
+		await message.add_reaction("👍")
+		await message.add_reaction("👎")
+
+		return
+	elif len(options) > 10:
+		await ctx.send(f"define at most 10 options")
+		return
+
+	description_ = ""
+
+	emojis = []
+
+	for i, option in enumerate(options):
+		emoji = reactions.pop(random.randint(0, len(reactions) - 1))
+		
+		emojis.append(emoji)
+
+		description_ += f"\n{emoji} - {option}"
+
+	em.description = description_
+
+	message = await ctx.send(embed=em)
+
+	for i in range(len(options)):
+		await message.add_reaction(emojis[i])
 
 # @bot.hybrid_command(name="about", hidden=True)
 # async def About(ctx):
