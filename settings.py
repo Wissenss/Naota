@@ -29,6 +29,9 @@ PERMISSIONS_FILE_PATH = os.getenv("PERMISSIONS_FILE_PATH")
 # webdrivers
 CHROME_DRIVER = os.getenv("CHROME_DRIVER")
 
+# scripts
+SCRIPTS_DIRECTORY_PATH = os.getenv("SCRIPTS_DIRECTORY_PATH")
+
 # logger
 LOG_LEVEL = os.getenv("LOG_LEVEL")
 LOGGER = logging.getLogger('discord.bot')

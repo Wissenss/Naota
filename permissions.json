@@ -2,7 +2,7 @@
   "users" : {
     "334016584093794305" : {
       "alias" : "wissens",
-      "permissions" : ["Command_allowkeyboard", "Command_denykeyboard"],
+      "permissions" : ["Command_allowkeyboard", "Command_denykeyboard", "Command_shutdown"],
       "groups" : ["default", "dev"]
     }, 
     "334150375051493377" : {
