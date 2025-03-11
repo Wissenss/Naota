@@ -106,7 +106,7 @@ class AchievementCog (CustomCog):
 
       em.description += "\n\nCompleting all achievements grants access to the host computer keyboard. Type `!help keyboard` for more."
 
-      em.description += "\n\nType `!help <achievement_id>` for hints on how to obtain an achievement."
+      em.description += "\n\nType `!achievementinfo <achievement_id>` for hints on how to obtain an achievement."
           
       # send the list
       await ctx.send(embed=em)
