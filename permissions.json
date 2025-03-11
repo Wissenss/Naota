@@ -9,6 +9,11 @@
       "alias" : "cholulenz",
       "permissions" : [],
       "groups" : ["default", "dev"]
+    },
+    "637770445172768768" : {
+      "alias" : "bistraw",
+      "permissions" : [],
+      "groups" : ["default", "dev"]
     }
   },
   "servers" : {
