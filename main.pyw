@@ -157,6 +157,7 @@ async def angrynoise(ctx : commands.context):
 	
 	em = discord.Embed(color=getDiscordMainColor())
 	
+	LOGGER.log(logging.DEBUG, "checking if user is connected to voice channel")
 	# the user most be connected to a voice channel
 	if not ctx.author.voice:
 		em.description = "Connect to a voice channel"
@@ -167,6 +168,7 @@ async def angrynoise(ctx : commands.context):
 
 	disconect_after_play = False
 
+	LOGGER.log(logging.DEBUG, "trying to connect to voice channel")
 	if not voice_channel:
 		disconect_after_play = True
 		voice_channel = await ctx.author.voice.channel.connect()
@@ -183,6 +185,7 @@ async def angrynoise(ctx : commands.context):
 	await ctx.send(embed=em)
 
 	if disconect_after_play:
+		LOGGER.log(logging.DEBUG, "disconnection from voice channel")
 		await voice_channel.disconnect()
 
 
