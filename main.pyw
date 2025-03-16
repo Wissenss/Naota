@@ -155,38 +155,42 @@ async def poll(ctx : commands.context, title : str, option_1 = "", option_2 = ""
 async def angrynoise(ctx : commands.context):
 	LOGGER.log(logging.INFO, f"{ctx.command.qualified_name} called (USER ID {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
 	
-	em = discord.Embed(color=getDiscordMainColor())
-	
-	LOGGER.log(logging.DEBUG, "checking if user is connected to voice channel")
-	# the user most be connected to a voice channel
-	if not ctx.author.voice:
-		em.description = "Connect to a voice channel"
+	try:
+		em = discord.Embed(color=getDiscordMainColor())
+		
+		LOGGER.log(logging.INFO, "  checking if user is connected to voice channel")
+		# the user most be connected to a voice channel
+		if not ctx.author.voice:
+			em.description = "Connect to a voice channel"
+			await ctx.send(embed=em)
+			return
+		
+		voice_channel = ctx.voice_client
+
+		disconect_after_play = False
+
+		LOGGER.log(logging.INFO, "  trying to connect to voice channel")
+		if not voice_channel:
+			disconect_after_play = True
+			voice_channel = await ctx.author.voice.channel.connect()
+
+		ring_audio_path = ASSETS_DIRECTORY_PATH + "angry_noise.mp3"
+
+		LOGGER.log(logging.INFO, f"  playing audio: {ring_audio_path}")
+
+		audio = discord.FFmpegOpusAudio(source=ring_audio_path); 
+
+		await voice_channel.play(audio)
+
+		em.description = "🔔"	
 		await ctx.send(embed=em)
-		return
-	
-	voice_channel = ctx.voice_client
 
-	disconect_after_play = False
+		if disconect_after_play:
+			LOGGER.log(logging.DEBUG, "  disconnecting from voice channel")
+			await voice_channel.disconnect()
 
-	LOGGER.log(logging.DEBUG, "trying to connect to voice channel")
-	if not voice_channel:
-		disconect_after_play = True
-		voice_channel = await ctx.author.voice.channel.connect()
-
-	ring_audio_path = ASSETS_DIRECTORY_PATH + "angry_noise.mp3"
-
-	LOGGER.log(logging.INFO, f"playing audio: {ring_audio_path}")
-
-	audio = discord.FFmpegOpusAudio(source=ring_audio_path); 
-
-	await voice_channel.play(audio)
-
-	em.description = "🔔"	
-	await ctx.send(embed=em)
-
-	if disconect_after_play:
-		LOGGER.log(logging.DEBUG, "disconnection from voice channel")
-		await voice_channel.disconnect()
+	except Exception as e:
+		LOGGER.log(logging.INFO, f"unhandled exception: {repr(e)}")
 
 
 # @bot.hybrid_command(name="about", hidden=True)
