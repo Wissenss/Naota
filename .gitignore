@@ -1,7 +1,7 @@
 __pycache__/
 
 .env
-*.mp3
+/buffer*.mp3
 *.spec
 
 /buffer

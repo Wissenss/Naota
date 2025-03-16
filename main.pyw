@@ -151,6 +151,38 @@ async def poll(ctx : commands.context, title : str, option_1 = "", option_2 = ""
 	for i in range(len(options)):
 		await message.add_reaction(emojis[i])
 
+@bot.hybrid_command(brief="ring the bell", description="that ain't like the visual novel your normie")
+async def angrynoise(ctx : commands.context):
+	em = discord.Embed(color=getDiscordMainColor())
+	
+	# the user most be connected to a voice channel
+	if not ctx.author.voice:
+		em.description = "Connect to a voice channel"
+		await ctx.send(embed=em)
+		return
+	
+	voice_channel = ctx.voice_client
+
+	disconect_after_play = False
+
+	if not voice_channel:
+		disconect_after_play = True
+
+		voice_channel = await ctx.author.voice.channel.connect()
+
+	ring_audio_path = ".\\resources\\angry_noise.mp3"
+
+	audio = discord.FFmpegOpusAudio(source=ring_audio_path); 
+
+	await voice_channel.play(audio)
+
+	em.description = "🔔"	
+	await ctx.send(embed=em)
+
+	if disconect_after_play:
+		await voice_channel.disconnect()
+
+
 # @bot.hybrid_command(name="about", hidden=True)
 # async def About(ctx):
 # 	em = discord.Embed(title="", description="", color=getDiscordMainColor())
