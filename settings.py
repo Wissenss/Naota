@@ -32,6 +32,9 @@ CHROME_DRIVER = os.getenv("CHROME_DRIVER")
 # scripts
 SCRIPTS_DIRECTORY_PATH = os.getenv("SCRIPTS_DIRECTORY_PATH")
 
+# assets
+ASSETS_DIRECTORY_PATH = os.getenv("ASSETS_DIRECTORY_PATH")
+
 # logger
 LOG_LEVEL = os.getenv("LOG_LEVEL")
 LOGGER = logging.getLogger('discord.bot')
