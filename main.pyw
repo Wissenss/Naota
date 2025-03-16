@@ -170,7 +170,9 @@ async def angrynoise(ctx : commands.context):
 
 		voice_channel = await ctx.author.voice.channel.connect()
 
-	ring_audio_path = ASSETS_DIRECTORY_PATH + "\\angry_noise.mp3"
+	ring_audio_path = ASSETS_DIRECTORY_PATH + "angry_noise.mp3"
+
+	LOGGER.log(logging.DEBUG, f"playing audio: {ring_audio_path}")
 
 	audio = discord.FFmpegOpusAudio(source=ring_audio_path); 
 
