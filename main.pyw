@@ -153,6 +153,8 @@ async def poll(ctx : commands.context, title : str, option_1 = "", option_2 = ""
 
 @bot.hybrid_command(brief="ring the bell", description="that ain't like the visual novel your normie")
 async def angrynoise(ctx : commands.context):
+	LOGGER.log(logging.INFO, f"{ctx.command.qualified_name} called (USER ID {ctx.author.id}) (GUILD ID: {ctx.guild.id})")
+	
 	em = discord.Embed(color=getDiscordMainColor())
 	
 	# the user most be connected to a voice channel
@@ -167,12 +169,11 @@ async def angrynoise(ctx : commands.context):
 
 	if not voice_channel:
 		disconect_after_play = True
-
 		voice_channel = await ctx.author.voice.channel.connect()
 
 	ring_audio_path = ASSETS_DIRECTORY_PATH + "angry_noise.mp3"
 
-	LOGGER.log(logging.DEBUG, f"playing audio: {ring_audio_path}")
+	LOGGER.log(logging.INFO, f"playing audio: {ring_audio_path}")
 
 	audio = discord.FFmpegOpusAudio(source=ring_audio_path); 
 
